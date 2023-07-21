@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    #canvas {
+      display: block;
+      margin: auto;
+      border: 1px solid black;
+    }
+    #letter-blue {
+      position: absolute;
+      top: 50%;
+      left: 50px;
+      transform: translateY(-50%);
+      font-size: 40px;
+      font-weight: bold;
+      color: blue;
+    }
+    #letter-red {
+      position: absolute;
+      top: 50%;
+      right: 50px;
+      transform: translateY(-50%);
+      font-size: 40px;
+      font-weight: bold;
+      color: red;
+    }
+    #overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: white;
+      z-index: 9999;
+      display: none;
+    }
+    #timer {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div id="letter-blue">B</div>
+  <div id="letter-red">R</div>
+  <canvas id="canvas" width="500" height="500"></canvas>
+  <div id="overlay"></div>
+  <div id="timer"></div>
+  <script>
+    // THIS IS THE CODE WITH PROPER WEIGHT W/ COLOR SATURATION !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    // THIS IS ALSO THE CODE WITH SHAPES STOPPING AFTER 10K MS (~20 sHAPES)!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    // THIS IS ALSO THE CODE WITH A RANDOMIZED TIMER (5000-10000 MS)!
+    // Define the shapes and their corresponding log likelihood ratios
+    const shapes = [
+      {shape: "hexagon", llr: -0.9},
+      {shape: "circle", llr: -0.7},
+      {shape: "square", llr: -0.5},
+      {shape: "triangle", llr: -0.3},
+      {shape: "rectangle", llr: 0.3},
+      {shape: "semicircle", llr: 0.5},
+      {shape: "heart", llr: 0.7},
+      {shape: "star", llr: 0.9}
+    ];
+
+    // Set up the canvas
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+
+    // Initialize variables
+    let shapeCounter = 0; // Counter variable for the number of shapes drawn
+    const shapeDelay = 500; // Delay between showing shapes in ms
+    const maxShapes = 20; // Max number of shapes (20)
+    let currentShapeTimeoutId; // Timeout ID for controlling shape drawing
+    let startTime; // Start time of shape drawing
+    let countdownMilliseconds; // Countdown duration in milliseconds
+    let remainingMilliseconds; // Remaining milliseconds on the countdown
+
+    // Define the function to draw a shape at the center of the canvas
+    function drawShape() {
+      // Clear the canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Generate a random shape index
+      const randomShapeIndex = Math.floor(Math.random() * shapes.length);
+
+      // Get the current shape and its log likelihood ratio
+      const currentShape = shapes[randomShapeIndex];
+      const currentShapeLLR = currentShape.llr;
+
+      // Calculate the concentration value based on the LLR
+      const concentration = Math.abs(currentShapeLLR) * 75;
+
+      // Calculate the color based on the concentration value and LLR sign
+      let color;
+
+      if (currentShapeLLR < 0) {
+        color = `rgba(0, 0, 255, ${concentration / 100})`; // Blue color
+      } else {
+        color = `rgba(255, 0, 0, ${concentration / 100})`; // Red color
+      }
+
+      // Draw the current shape at the center of the canvas
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      const size = 100;
+
+      ctx.beginPath();
+
+      switch (currentShape.shape) {
+        case "hexagon":
+          ctx.moveTo(centerX + size * Math.cos(0), centerY + size * Math.sin(0));
+          for (let i = 1; i <= 6; i++) {
+            ctx.lineTo(centerX + size * Math.cos(i * 2 * Math.PI / 6), centerY + size * Math.sin(i * 2 * Math.PI / 6));
+          }
+          break;
+
+        case "circle":
+          ctx.arc(centerX, centerY, size / 2, 0, 2 * Math.PI);
+          break;
+
+        case "square":
+          ctx.rect(centerX - size / 2, centerY - size / 2, size, size);
+          break;
+
+        case "triangle":
+          ctx.moveTo(centerX, centerY - size / 2);
+          ctx.lineTo(centerX - size / 2, centerY + size / 2);
+          ctx.lineTo(centerX + size / 2, centerY + size / 2);
+          break;
+
+        case "rectangle":
+          ctx.rect(centerX - size, centerY - size / 2, 2 * size, size);
+          break;
+
+        case "semicircle":
+          ctx.arc(centerX, centerY, size / 2, 0, Math.PI, true);
+          break;
+
+        case "heart":
+          ctx.moveTo(centerX, centerY + size / 4);
+          ctx.bezierCurveTo(centerX - size / 2, centerY - size / 2, centerX - size, centerY - size / 4, centerX, centerY + size / 2);
+          ctx.bezierCurveTo(centerX + size, centerY - size / 4, centerX + size / 2, centerY - size / 2, centerX, centerY + size / 4);
+          break;
+
+        case "star":
+          const innerRadius = size / 2;
+          const outerRadius = size;
+          const spikes = 5;
+          const rotation = Math.PI / 2;
+
+          ctx.moveTo(centerX + outerRadius * Math.cos(rotation), centerY + outerRadius * Math.sin(rotation));
+
+          for (let i = 0; i < spikes; i++) {
+            const outerX = centerX + outerRadius * Math.cos(rotation + (i * 2 * Math.PI / spikes));
+            const outerY = centerY + outerRadius * Math.sin(rotation + (i * 2 * Math.PI / spikes));
+            ctx.lineTo(outerX, outerY);
+
+            const innerX = centerX + innerRadius * Math.cos(rotation + ((i + 0.5) * 2 * Math.PI / spikes));
+            const innerY = centerY + innerRadius * Math.sin(rotation + ((i + 0.5) * 2 * Math.PI / spikes));
+            ctx.lineTo(innerX, innerY);
+          }
+          break;
+      }
+
+      ctx.closePath();
+      ctx.fillStyle = color;
+      ctx.fill();
+
+      // Increment the shape counter
+      shapeCounter++;
+
+      // Check if the maximum number of shapes has been reached
+      if (shapeCounter < maxShapes) {
+        // Schedule the next shape to be drawn after the delay
+        currentShapeTimeoutId = setTimeout(drawShape, shapeDelay);
+      } else {
+        // All shapes have been drawn, make the entire screen blank
+        document.getElementById("overlay").style.display = "block";
+      }
+    }
+
+    // Start drawing shapes
+    startTime = Date.now();
+    drawShape();
+
+    // Randomize the countdown duration between 5000 and 10000 milliseconds
+    countdownMilliseconds = Math.floor(Math.random() * (10000 - 5000 + 1)) + 5000;
+
+    // Calculate the remaining milliseconds on the countdown
+    remainingMilliseconds = countdownMilliseconds - (Date.now() - startTime);
+
+    // Display and update the countdown timer
+    const timerElement = document.getElementById("timer");
+    timerElement.textContent = remainingMilliseconds;
+
+    function updateTimer() {
+      remainingMilliseconds = countdownMilliseconds - (Date.now() - startTime);
+      timerElement.textContent = remainingMilliseconds;
+
+      if (remainingMilliseconds <= 0) {
+        clearTimeout(currentShapeTimeoutId); // Stop further shape drawing
+        document.getElementById("overlay").style.display = "block"; // Display the white screen overlay
+        document.body.style.backgroundColor = "white"; // Set the background color to white
+        timerElement.style.display = "none"; // Hide the timer
+      }
+    }
+
+    setInterval(updateTimer, 100); // Update the timer every 100 milliseconds
+
+    // Add event listener for arrow key presses
+    window.addEventListener("keydown", function(event) {
+      if (event.code === "ArrowLeft" || event.code === "ArrowRight") {
+        clearTimeout(currentShapeTimeoutId); // Stop further shape drawing
+        document.getElementById("overlay").style.display = "block"; // Display the white screen overlay
+        document.body.style.backgroundColor = "white"; // Set the background color to white
+        timerElement.style.display = "none"; // Hide the timer
+      }
+    });
+  </script>
+</body>
+</html>

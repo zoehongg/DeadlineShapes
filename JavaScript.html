@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    .shape {
+      width: 100px;
+      height: 100px;
+      display: inline-block;
+    }
+    .triangle {
+      border-bottom: 50px solid red;
+      border-left: 50px solid transparent;
+      border-right: 50px solid transparent;
+      border-top: 0;
+    }
+    .square {
+      background-color: green;
+    }
+    .circle {
+      background-color: blue;
+      border-radius: 50px;
+    }
+  </style>
+</head>
+<body>
+  <div id="shapeContainer"></div>
+</body>
+<script>
+  // THIS IS THE CODE THAT HAS A BUNCH OF SHAPES APPEAR SIDE BY SIDE ON THE SCREEN THAT RESTART WHEN A LEFT/RIGHT ARROW KEY IS PRESSED
+  const shapes = ["triangle", "square", "circle"];
+  let lastIndex = null;
+  let timeoutId;
+
+  function displayShape() {
+    const shapeContainer = document.getElementById("shapeContainer");
+    const shapeDiv = document.createElement("div");
+    let randomIndex = Math.floor(Math.random() * shapes.length);
+    if (lastIndex === randomIndex) {
+      randomIndex = (randomIndex + 1) % shapes.length;
+    }
+    lastIndex = randomIndex;
+    shapeDiv.classList.add("shape");
+    shapeDiv.classList.add(shapes[randomIndex]);
+    shapeContainer.appendChild(shapeDiv);
+    const meanTime = 1000; // change this to set the mean time for the exponential distribution
+    const minTime = 100; // minimum time to display a shape
+    const maxTime = 2000; // maximum time to display a shape
+    const time = Math.max(minTime, Math.min(maxTime, -Math.log(Math.random()) * meanTime));
+    timeoutId = setTimeout(displayShape, time);
+  }
+
+  displayShape();
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "ArrowLeft" || event.key === "ArrowRight" || event.key === "ArrowUp" || event.key === "ArrowDown") {
+      clearTimeout(timeoutId);
+      document.getElementById("shapeContainer").innerHTML = "";
+      displayShape();
+    }
+  });
+</script>
+</html>

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    #canvas {
+      display: block;
+      margin: auto;
+      border: 1px solid black;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="canvas" width="500" height="500"></canvas>
+  <script>
+    // THIS IS THE CODE WITH PROPER WEIGHT W/ COLOR SATURATION !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    // Define the shapes and their corresponding log likelihood ratios
+    const shapes = [
+      {shape: "hexagon", llr: -0.9},
+      {shape: "circle", llr: -0.7},
+      {shape: "square", llr: -0.5},
+      {shape: "triangle", llr: -0.3},
+      {shape: "rectangle", llr: 0.3},
+      {shape: "semicircle", llr: 0.5},
+      {shape: "heart", llr: 0.7},
+      {shape: "star", llr: 0.9}
+    ];
+
+    // Set up the canvas
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+
+    // Initialize variables
+    let shapeCounter = 0; // Counter variable for the number of shapes drawn
+    const shapeDelay = 500; // Delay between showing shapes in ms
+    const maxShapes = 20; // Max number of shapes (20)
+
+    // Define the function to draw a shape at the center of the canvas
+    function drawShape() {
+      // Clear the canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Generate a random shape index
+      const randomShapeIndex = Math.floor(Math.random() * shapes.length);
+
+      // Get the current shape and its log likelihood ratio
+      const currentShape = shapes[randomShapeIndex];
+      const currentShapeLLR = currentShape.llr;
+
+      // Calculate the concentration value based on the LLR
+      const concentration = Math.abs(currentShapeLLR) * 75;
+
+      // Calculate the color based on the concentration value and LLR sign
+      let color;
+
+      if (currentShapeLLR < 0) {
+        color = `rgba(0, 0, 255, ${concentration / 100})`; // Blue color
+      } else {
+        color = `rgba(255, 0, 0, ${concentration / 100})`; // Red color
+      }
+
+      // Draw the current shape at the center of the canvas
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      const size = 100;
+
+      ctx.beginPath();
+
+      switch (currentShape.shape) {
+        case "hexagon":
+          ctx.moveTo(centerX + size * Math.cos(0), centerY + size * Math.sin(0));
+          for (let i = 1; i <= 6; i++) {
+            ctx.lineTo(centerX + size * Math.cos(i * 2 * Math.PI / 6), centerY + size * Math.sin(i * 2 * Math.PI / 6));
+          }
+          break;
+
+        case "circle":
+          ctx.arc(centerX, centerY, size / 2, 0, 2 * Math.PI);
+          break;
+
+        case "square":
+          ctx.rect(centerX - size / 2, centerY - size / 2, size, size);
+          break;
+
+        case "triangle":
+          ctx.moveTo(centerX + size * Math.cos(0), centerY + size * Math.sin(0));
+          ctx.lineTo(centerX + size * Math.cos(2 * Math.PI / 3), centerY + size * Math.sin(2 * Math.PI / 3));
+          ctx.lineTo(centerX + size * Math.cos(4 * Math.PI / 3), centerY + size * Math.sin(4 * Math.PI / 3));
+          break;
+
+        case "rectangle":
+          ctx.rect(centerX - size, centerY - size / 2, 2 * size, size);
+          break;
+
+        case "semicircle":
+          ctx.arc(centerX, centerY, size / 2, 0, Math.PI, true);
+          break;
+
+        case "heart":
+          ctx.moveTo(centerX, centerY + size / 4);
+          ctx.bezierCurveTo(centerX - size / 2, centerY - size / 2, centerX - size, centerY - size / 4, centerX, centerY + size / 2);
+          ctx.bezierCurveTo(centerX + size, centerY - size / 4, centerX + size / 2, centerY - size / 2, centerX, centerY + size / 4);
+          break;
+
+        case "star":
+          const innerRadius = size / 2;
+          const outerRadius = size;
+          const spikes = 5;
+          const rotation = Math.PI / 2;
+
+          ctx.moveTo(centerX + outerRadius * Math.cos(rotation), centerY + outerRadius * Math.sin(rotation));
+
+          for (let i = 0; i < spikes; i++) {
+            const outerX = centerX + outerRadius * Math.cos(rotation + (i * 2 * Math.PI / spikes));
+            const outerY = centerY + outerRadius * Math.sin(rotation + (i * 2 * Math.PI / spikes));
+            ctx.lineTo(outerX, outerY);
+
+            const innerX = centerX + innerRadius * Math.cos(rotation + ((i + 0.5) * 2 * Math.PI / spikes));
+            const innerY = centerY + innerRadius * Math.sin(rotation + ((i + 0.5) * 2 * Math.PI / spikes));
+            ctx.lineTo(innerX, innerY);
+          }
+          break;
+      }
+
+      ctx.closePath();
+      ctx.fillStyle = color;
+      ctx.fill();
+
+      // Increment the shape counter
+      shapeCounter++;
+
+      // Check if the maximum number of shapes has been reached
+      if (shapeCounter < maxShapes) {
+        // Schedule the next shape to be drawn after the delay
+        setTimeout(drawShape, shapeDelay);
+      }
+    }
+
+    // Start drawing shapes
+    drawShape();
+  </script>
+</body>
+</html>
