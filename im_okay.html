@@ -116,9 +116,15 @@
 
   // Wrap JavaScript code inside a DOMContentLoaded event listener
   document.addEventListener("DOMContentLoaded", function() {
+
+
+// BEGIN VARIABLE DECLARATIONS
+
+
     // Set up the canvas and declare the ctx variable
     const canvas = document.getElementById("canvas");
     const ctx = canvas.getContext("2d"); // Define the ctx variable
+
     // Declare the updateTimerId variable at the top
     let updateTimerId;
     let passedTime = 0; // Initialize passedTime
@@ -135,14 +141,6 @@
     let countdownMilliseconds; // Countdown duration in milliseconds
     let remainingMilliseconds; // Remaining milliseconds on the countdown
 
-    // Attach event listeners to the buttons (capture the clicked button's value)
-    confidenceButtons.forEach((button, index) => {
-      button.addEventListener('click', () => {
-        selectedConfidence = index + 1; // Store the selected confidence value [CF: why +1?]
-        submitConfidence(selectedConfidence); // Call the submitConfidence function
-      });
-    });
-
     // Define the shapes and their corresponding log likelihood ratios
     const shapes = [
       {shape: "hexagon", llr: -0.9},
@@ -155,12 +153,51 @@
       {shape: "star", llr: 0.9}
     ];
 
-    // Initialize variables
+    // Initialize some other variables
     let shapeCounter = 0; // Counter variable for the number of shapes drawn
     const shapeDelay = 500; // Delay between showing shapes in ms
     const maxShapes = 20; // Max number of shapes (20)
     let currentShapeTimeoutId; // Timeout ID for controlling shape drawing
     let startTime; // Start time of shape drawing
+
+
+// BEGIN EVENT LISTENERS (not including the DOMContentLoaded listener which houses all the code)
+
+
+    // Add event listener for arrow key presses
+    window.addEventListener("keydown", function(event) {
+      if (event.code === "ArrowLeft" || event.code === "ArrowRight") {
+        // Pause the timer and shape drawing
+        isPaused = true;
+        clearTimeout(currentShapeTimeoutId);
+
+        const arrowPressed = event.code === "ArrowLeft" ? 0 : 1;
+        console.log(`Arrow ${arrowPressed} key pressed`); // Log the event
+
+        // Show the confidence page without resetting the timer
+        showConfidencePage();
+
+        // Check if the continueButton element exists before adding the event listener
+        const continueButton = document.getElementById("continue-button");
+        if (continueButton) {
+          continueButton.addEventListener("click", continueToNextTrial);
+        }
+      }
+    });
+
+    // Attach event listeners to the buttons (capture the clicked button's value)
+    confidenceButtons.forEach((button, index) => {
+      button.addEventListener('click', () => {
+        selectedConfidence = index + 1; // Store the selected confidence value
+        submitConfidence(selectedConfidence); // Call the submitConfidence function
+      });
+    });
+
+
+
+// BEGIN MAIN FUNCTIONS
+
+
 
     // Function to update the timer display and timer bar
     function updateTimerDisplay() {
@@ -203,65 +240,6 @@
           }
 
           // isTimerAtZero = false; // Reset the flag [CF - why? it's already false or else you wouldn't be here]
-        }
-      }
-    }
-
-    // Function to handle arrow key presses and show the confidence page
-    function showConfidencePage() {
-      if (!isPaused) {
-        isPaused = true; // Pause the timer
-        clearTimeout(currentShapeTimeoutId); // Stop further shape drawing
-      }
-
-      // Hide all the elements on the screen
-      document.getElementById("letter-blue").style.display = "none";
-      document.getElementById("letter-red").style.display = "none";
-      document.getElementById("canvas").style.display = "none";
-      document.getElementById("overlay").style.display = "none";
-      document.getElementById("timer").style.display = "none";
-
-      // Check if the timer has not reached 0 before showing the confidence page
-      if (remainingMilliseconds > 0) {
-        document.getElementById("confidence").style.display = "block"; // Display the confidence page
-      } else {
-        outOfTimeMessage(); // Display the "Oh dear" message
-      }
-    }
-
-    // Function to continue to the next trial
-    function continueToNextTrial() {
-      // Remove the "Oh dear" page
-      const ohNoPage = document.getElementById("oh-no-page");
-      document.body.removeChild(ohNoPage);
-
-      // Reset variables and restart the shapes/timer sequence
-      shapeCounter = 0;
-      shapesCompleted = false;
-      passedTime = 0;
-      isPaused = false;
-      arrowKeyPressed = false;
-      isOutOfTime = false;
-
-      // Restart the shapes/timer sequence for the next trial
-      startShapesTimer();
-    }
-
-        // Function to handle the "Oh dear" message when the timer reaches 0
-    function outOfTimeMessage() {
-      if (!isOutOfTime) {
-        // Hide elements and stop drawing
-        stopDrawing();
-        isPaused = true;
-        clearTimeout(currentShapeTimeoutId);
-
-        // Set the flag to indicate that the timer is at 0
-        isTimerAtZero = true;
-
-        // Check if the "Continue" button exists before adding the event listener
-        const continueButton = document.getElementById("continue-button");
-        if (continueButton) {
-          continueButton.addEventListener("click", continueToNextTrial);
         }
       }
     }
@@ -390,6 +368,82 @@
       }
     }
 
+    // Function to handle arrow key presses and show the confidence page
+    function showConfidencePage() {
+      if (!isPaused) {
+        isPaused = true; // Pause the timer
+        clearTimeout(currentShapeTimeoutId); // Stop further shape drawing
+      }
+
+      // Hide all the elements on the screen
+      document.getElementById("letter-blue").style.display = "none";
+      document.getElementById("letter-red").style.display = "none";
+      document.getElementById("canvas").style.display = "none";
+      document.getElementById("overlay").style.display = "none";
+      document.getElementById("timer").style.display = "none";
+
+      // Check if the timer has not reached 0 before showing the confidence page
+      if (remainingMilliseconds > 0) {
+        document.getElementById("confidence").style.display = "block"; // Display the confidence page
+      } else {
+        outOfTimeMessage(); // Display the "Oh dear" message
+      }
+    }
+
+    // Function to handle the "Oh dear" message when the timer reaches 0
+    function outOfTimeMessage() {
+      if (!isOutOfTime) { // why "!" ???????
+        // Hide elements and stop drawing
+        stopDrawing();
+        isPaused = true;
+        clearTimeout(currentShapeTimeoutId);
+
+        // Set the flag to indicate that the timer is at 0
+        isTimerAtZero = true;
+
+        // Check if the "Continue" button exists before adding the event listener
+        const continueButton = document.getElementById("continue-button");
+        if (continueButton) {
+          continueButton.addEventListener("click", continueToNextTrial);
+        }
+      }
+    }
+
+    // Function to continue to the next trial from 'Oh dear' page (after time expires)
+    function continueToNextTrial() {
+      // Remove the "Oh dear" page
+      const ohNoPage = document.getElementById("oh-no-page");
+      if (ohNoPage) {
+        // document.body.removeChild(ohNoPage);
+        ohNoPage.style.display = "none";
+      }
+
+      // Reset variables and restart the shapes/timer sequence
+      shapeCounter = 0;
+      shapesCompleted = false;
+      passedTime = 0;
+      isPaused = false;
+      arrowKeyPressed = false;
+      isOutOfTime = false;
+
+      // Restart the shapes/timer sequence for the next trial
+      startShapesTimer();
+    }
+
+
+
+
+
+    // END MAIN FUNCTIONS
+
+
+
+
+
+    // BEGIN EXECUTION CODE
+
+
+
     // Start drawing shapes
     startTime = Date.now();
     drawShape();
@@ -403,69 +457,13 @@
     const timerElement = document.getElementById("timer");
     timerElement.textContent = remainingMilliseconds;
 
-    // Add event listener for arrow key presses
-    window.addEventListener("keydown", function(event) {
-      if (event.code === "ArrowLeft" || event.code === "ArrowRight") {
-        // Pause the timer and shape drawing
-        isPaused = true;
-        clearTimeout(currentShapeTimeoutId);
-
-        const arrowPressed = event.code === "ArrowLeft" ? 0 : 1;
-        console.log(`Arrow ${arrowPressed} key pressed`); // Log the event
-
-        // Show the confidence page without resetting the timer
-        showConfidencePage();
-
-        // Check if the continueButton element exists before adding the event listener
-        const continueButton = document.getElementById("continue-button");
-        if (continueButton) {
-          continueButton.addEventListener("click", continueToNextTrial);
-        }
-      }
-    });
+    // HERE WAS "Add event listener for arrow key presses"
 
     let shapesCompleted = false;
     // Hide the timer bar container when an arrow key is pressed
     document.getElementById("timer-bar-container").classList.add("hidden");
 
-    // Function to restart the original shapes and timer sequence
-    function restartShapes() {
 
-      // Reset canvas and other elements
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      document.getElementById("overlay").style.display = "none";
-      document.getElementById("confidence").style.display = "none";
-      document.getElementById("letter-blue").style.display = "block";
-      document.getElementById("letter-red").style.display = "block";
-      document.getElementById("timer").style.display = "block";
-
-      // Update countdownMilliseconds and remainingMilliseconds
-      countdownMilliseconds = Math.floor(Math.random() * (10000 - 5000 + 1)) + 5000;
-      remainingMilliseconds = countdownMilliseconds;
-
-      // Restart drawing shapes
-      shapeCounter = 0;
-      document.body.style.backgroundColor = "transparent"; // Reset background color
-      drawShape(); // Call drawShape directly
-      startTime = Date.now();
-
-      // Update and display the countdown timer
-      const timerElement = document.getElementById("timer");
-      timerElement.textContent = Math.ceil(remainingMilliseconds / 1000);
-
-      // Call the updateTimerDisplay function initially to start updating the timer display
-      updateTimerDisplay();
-    }
-
-    // Function to stop drawing shapes and show confidence message
-    function stopDrawing() {
-      clearTimeout(currentShapeTimeoutId); // Stop further shape drawing
-      document.getElementById("confidence").style.display = "block"; // Display the confidence message
-      document.getElementById("letter-blue").style.display = "none"; // Hide blue letter
-      document.getElementById("letter-red").style.display = "none"; // Hide red letter
-      document.getElementById("canvas").style.display = "none"; // Hide canvas
-      document.getElementById("timer").style.display = "none"; // Hide timer
-    }
 
     // Function to submit confidence and show success page
     function submitConfidence(confidence) {
@@ -481,11 +479,14 @@
       // Display the success page with "Good job" message and next trial button
       const successPage = document.getElementById("success-page");
       successPage.style.display = "block";
+
       const nextTrialButton = document.getElementById("next-trial-button");
-      nextTrialButton.style.display = "block";
+      //nextTrialButton.style.display = "block";
+      nextTrialButton.addEventListener("click", continueToNextTrial);
+  //  } // should end here, but where does it go next?
 
-
-//      nextTrialButton.addEventListener("click", restartShapes);
+//  const continueButton = document.getElementById("continue-button");
+//  continueButton.addEventListener("click", continueToNextTrial);
 
 
     //   // Add event listener to the "Next Trial" button to restart the sequence
@@ -557,44 +558,6 @@
     updateTimerDisplay();
     console.log("remainingMilliseconds:", remainingMilliseconds);
 
-
-    // Function to update the timer display and timer bar
-    function updateTimerDisplay() {
-      const timerBar = document.getElementById("timer-bar");
-      const currentTime = Date.now();
-      passedTime = currentTime - startTime;
-      let remainingMilliseconds = countdownMilliseconds - passedTime;
-      remainingMilliseconds = Math.max(remainingMilliseconds, 0);
-
-      const totalMilliseconds = countdownMilliseconds;
-      const filledPercentage = ((totalMilliseconds - passedTime) / totalMilliseconds) * 100;
-      timerBar.style.width = `${filledPercentage}%`;
-
-      const remainingSeconds = Math.ceil(remainingMilliseconds / 1000);
-      document.getElementById("timer").textContent = remainingSeconds;
-
-      if (remainingMilliseconds <= 0) {
-        timerBar.style.width = "0%";
-        console.log('Time is up!');
-        clearInterval(updateTimerId);
-        outOfTimeMessage();
-        stopDrawing();
-        isTimeUp = true; // Set the isTimeUp variable to true
-      } else {
-        // Show the timer bar container when the timer is above 0
-        document.getElementById("timer-bar-container").classList.remove("hidden");
-
-        // Hide the "Oh dear" page if the timer is not at 0
-        if (isTimerAtZero) {
-          const ohNoPage = document.getElementById("oh-no-page");
-          if (ohNoPage) {
-            document.body.removeChild(ohNoPage);
-          }
-          isTimerAtZero = false; // Reset the flag
-        }
-      }
-    }
-
     // Function to update the timer and check if time is up
     function updateTimer() {
       if (!isPaused) {
@@ -654,16 +617,6 @@
     const continueButton = document.getElementById("continue-button");
     continueButton.addEventListener("click", continueToNextTrial);
 
-    // Function to start the confidence page
-    function startConfidencePage() {
-      document.getElementById("letter-blue").style.display = "none";
-      document.getElementById("letter-red").style.display = "none";
-      document.getElementById("canvas").style.display = "none";
-      document.getElementById("overlay").style.display = "none";
-      document.getElementById("timer").style.display = "none";
-      document.getElementById("confidence").style.display = "block";
-    }
-
     // Call the updateTimer function to start the countdown
     updateTimerId = setInterval(updateTimer, 100);
 
@@ -683,7 +636,10 @@
 
     // Call the runPattern function to start the repeating pattern
     runPattern();
-  }
+
+  } // this is the end of submitConfidence! can't be right...
+
   // Close the DOMContentLoaded event listener
   });
+
 </script>
