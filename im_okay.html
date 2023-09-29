@@ -460,7 +460,7 @@
 
     // Function to hide the intro page and start the trial
     function startTrial() {
-      const introPage = document.getElementById("intro-page");
+      const introPage = document.getElementById("intro=page");
       if (introPage) {
         introPage.style.display = "none";
       }
@@ -624,28 +624,22 @@
     if (maxShapesPage) {
       maxShapesPage.style.display = "none";
     }
-    const introPage = document.getElementById("intro=page");
-    if (introPage) {
-      introPage.style.display = "none";
-    }
-
-
 
     // Record the start time
     startTime = Date.now();
 
     // Start timer
-    startShapesTimer();
+//    startShapesTimer();  //we don't need this here if it's called in startTrial
 
     // Update timer display (number and bar, if visible)
 //    const timerElement = document.getElementById("timer");
 //    timerElement.textContent = Math.ceil(remainingMilliseconds / 1000);
-    updateTimerDisplay();
+//    updateTimerDisplay();
 
     // Call the updateTimer function now and every N ms
-    updateTimerId = setInterval(updateTimer, 10);
+//    updateTimerId = setInterval(updateTimer, 10);
 
-    run();
+//    run();
 
 
   // Close the DOMContentLoaded event listener
