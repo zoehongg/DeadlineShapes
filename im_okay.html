@@ -83,6 +83,21 @@
   </style>
 </head>
 <body>
+  <div id="intro=page" class="page">
+    <p><i>Welcome! Thank you for choosing to participate in this experiment. Please read all instructions before starting:</i></p>
+    <p>Let's play a game. Take a look at the diagram below. Each shape represents a different concentration of a color.
+      Some are more/less concentrated red while others are more/less concentrated blue.</p>
+    <p>When you click the start button, a series of shapes will appear on your screen. Please follow along with the shapes
+      to figure out whether more red/blue is shown. Click on the left arrow key if you think that there's more red. Click
+      on the right arrow key if you think there's more blue.</p>
+    <p>Once you press an arrow key, you will be asked how confident you feel in your decision (how "correct" do you think
+      you were?). Click one of the buttons that appear on the screen to indicate whether you feel completely certain that
+      your answer was a complete guess (1) or if you believe with utmost certainty that you were right (5).</p>
+    </p><b>CAUTION<b><br>You have limited time to complete the task, so be careful! Sometimes, you might see how much time
+      you have left. Other times, you might not...<p>
+    <p>Click the start button to play!</p>
+    <button id="start-button">Start!</button>
+  </div>
   <div id="letter-blue">B</div>
   <div id="letter-red">R</div>
   <canvas id="canvas" width="500" height="500"></canvas>
@@ -203,40 +218,40 @@
 // BEGIN HELPER FUNCTIONS
 
 
-// Function to update the timer and check if time is up
-function updateTimer() {
-  if (!isPaused) {
-    let currentTime = new Date().getTime();
-    let remainingMilliseconds = countdownMilliseconds - passedTime;
+    // Function to update the timer and check if time is up
+    function updateTimer() {
+      if (!isPaused) {
+        let currentTime = new Date().getTime();
+        let remainingMilliseconds = countdownMilliseconds - passedTime;
 
-    // Display the remaining time in milliseconds
-//    console.log(`Time remaining: ${remainingMilliseconds} milliseconds`);
+        // Display the remaining time in milliseconds
+    //    console.log(`Time remaining: ${remainingMilliseconds} milliseconds`);
 
-    // Stop the countdown at zero
-    if (remainingMilliseconds <= 0) {
-      console.log('Time is up!');
-      // Stop updating the timer display
-      clearInterval(updateTimerId);
-      // Mark that time is out
-      isOutOfTime = true;
-      // Display the "Oh dear" page if no arrow key was pressed
-      if (!arrowKeyPressed) {
-        outOfTimeMessage();
+        // Stop the countdown at zero
+        if (remainingMilliseconds <= 0) {
+          console.log('Time is up!');
+          // Stop updating the timer display
+          clearInterval(updateTimerId);
+          // Mark that time is out
+          isOutOfTime = true;
+          // Display the "Oh dear" page if no arrow key was pressed
+          if (!arrowKeyPressed) {
+            outOfTimeMessage();
+          }
+        }
       }
     }
+
+  // Function to stop drawing shapes and show confidence message
+  function stopDrawing() {
+    document.getElementById("letter-blue").style.display = "none"; // Hide blue letter
+    document.getElementById("letter-red").style.display = "none"; // Hide red letter
+    document.getElementById("canvas").style.display = "none"; // Hide canvas
+    document.getElementById("timer").style.display = "none"; // Hide timer
+
+    // shouldn't this be doing something else?
+
   }
-}
-
-// Function to stop drawing shapes and show confidence message
-function stopDrawing() {
-  document.getElementById("letter-blue").style.display = "none"; // Hide blue letter
-  document.getElementById("letter-red").style.display = "none"; // Hide red letter
-  document.getElementById("canvas").style.display = "none"; // Hide canvas
-  document.getElementById("timer").style.display = "none"; // Hide timer
-
-  // shouldn't this be doing something else?
-
-}
  
 
 // BEGIN MAIN FUNCTIONS
@@ -244,12 +259,9 @@ function stopDrawing() {
 
     // Wrap the main code inside a function that handles the repeating pattern
     function run() {
-
       // Draw a shape
       drawShape();
-
     }
-
 
     // Function to update the timer display and timer bar
     function updateTimerDisplay() {
@@ -259,9 +271,7 @@ function stopDrawing() {
       let remainingMilliseconds = countdownMilliseconds - passedTime;
       remainingMilliseconds = Math.max(remainingMilliseconds, 0);
 
-      const totalMilliseconds = countdownMilliseconds;
-
-      const filledPercentage = ((totalMilliseconds - passedTime) / totalMilliseconds) * 100;
+      const filledPercentage = Math.max(((countdownMilliseconds - passedTime) / countdownMilliseconds) * 100, 0);
       timerBar.style.width = `${filledPercentage}%`;
       console.log("filledPercentage:", filledPercentage);
 
@@ -446,6 +456,26 @@ function stopDrawing() {
       shapeCounter = 0;
       document.body.style.backgroundColor = "transparent"; // Reset background color
 
+    }
+
+    // Function to hide the intro page and start the trial
+    function startTrial() {
+      const introPage = document.getElementById("intro-page");
+      if (introPage) {
+        introPage.style.display = "none";
+      }
+
+      // Start the trial here
+      startShapesTimer();
+      run();
+    }
+
+    // Add event listener to the "Start" button
+    const startButton = document.getElementById("start-button");
+    if (startButton) {
+      startButton.addEventListener("click", startTrial);
+      startShapesTimer();
+      run();
     }
 
     // Function to handle arrow key presses and show the confidence page
