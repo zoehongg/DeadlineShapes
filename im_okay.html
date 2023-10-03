@@ -46,6 +46,7 @@
       font-size: 20px;
       z-index: 1;
     }
+
     #confidence {
       position: fixed;
       top: 10px;
@@ -72,18 +73,37 @@
       margin-top: 10px;
     }
     #timer-bar {
-      height: 100%;
+      /* height: 100%;
       width: 100%;
       background-color: #000000;
-      transition: width 1s linear;
+      transition: width 1s linear; */
+      animation-name: timerAnimation;
+      animation-timing-function: linear;
+      animation-fill-mode: forwards;
     }
     #timer-bar-container.hidden {
       display: none;
     }
+
+    @keyframes timerAnimation {
+      0% {
+        width: 100%;
+      }
+      100% {
+        width: 0%;
+      }
+    }
+        /* #timer-bar {
+        animation-name: timerAnimation;
+        animation-timing-function: linear;
+        animation-fill-mode: forwards;
+        } */
+
+
   </style>
 </head>
 <body>
-  <div id="intro=page" class="page">
+  <div id="intro-page" class="page">
     <p><i>Welcome! Thank you for choosing to participate in this experiment. Please read all instructions before starting:</i></p>
     <p>Let's play a game. Take a look at the diagram below. Each shape represents a different concentration of a color.
       Some are more/less concentrated red while others are more/less concentrated blue.</p>
@@ -218,32 +238,34 @@
 // BEGIN HELPER FUNCTIONS
 
 
-    // Function to update the timer and check if time is up
-    function updateTimer() {
-      if (!isPaused) {
-        let currentTime = new Date().getTime();
-        let remainingMilliseconds = countdownMilliseconds - passedTime;
-
-        // Display the remaining time in milliseconds
-    //    console.log(`Time remaining: ${remainingMilliseconds} milliseconds`);
-
-        // Stop the countdown at zero
-        if (remainingMilliseconds <= 0) {
-          console.log('Time is up!');
-          // Stop updating the timer display
-          clearInterval(updateTimerId);
-          // Mark that time is out
-          isOutOfTime = true;
-          // Display the "Oh dear" page if no arrow key was pressed
-          if (!arrowKeyPressed) {
-            outOfTimeMessage();
-          }
-        }
-      }
-    }
+    // // Function to update the timer and check if time is up
+    // function updateTimer() {
+    //   console.log("current function: updateTimer");
+    //   if (!isPaused) {
+    //     let currentTime = new Date().getTime();
+    //     let remainingMilliseconds = countdownMilliseconds - passedTime;
+    //
+    //     // Display the remaining time in milliseconds
+    // //    console.log(`Time remaining: ${remainingMilliseconds} milliseconds`);
+    //
+    //     // Stop the countdown at zero
+    //     if (remainingMilliseconds <= 0) {
+    //       console.log('Time is up!');
+    //       // Stop updating the timer display
+    //       clearInterval(updateTimerId);
+    //       // Mark that time is out
+    //       isOutOfTime = true;
+    //       // Display the "Oh dear" page if no arrow key was pressed
+    //       if (!arrowKeyPressed) {
+    //         outOfTimeMessage();
+    //       }
+    //     }
+    //   }
+    // }
 
   // Function to stop drawing shapes and show confidence message
   function stopDrawing() {
+    console.log("current function: stopDrawing");
     document.getElementById("letter-blue").style.display = "none"; // Hide blue letter
     document.getElementById("letter-red").style.display = "none"; // Hide red letter
     document.getElementById("canvas").style.display = "none"; // Hide canvas
@@ -256,55 +278,20 @@
 
 // BEGIN MAIN FUNCTIONS
 
-
     // Wrap the main code inside a function that handles the repeating pattern
     function run() {
+      console.log("current function: run");
+
+      // Set the start time
+      startTime = Date.now();
+
       // Draw a shape
       drawShape();
     }
 
-    // Function to update the timer display and timer bar
-    function updateTimerDisplay() {
-      const timerBar = document.getElementById("timer-bar");
-      const currentTime = Date.now();
-      passedTime = currentTime - startTime;
-      let remainingMilliseconds = countdownMilliseconds - passedTime;
-      remainingMilliseconds = Math.max(remainingMilliseconds, 0);
-
-      const filledPercentage = Math.max(((countdownMilliseconds - passedTime) / countdownMilliseconds) * 100, 0);
-      timerBar.style.width = `${filledPercentage}%`;
-      console.log("filledPercentage:", filledPercentage);
-
-      const remainingSeconds = Math.ceil(remainingMilliseconds / 1000);
-      document.getElementById("timer").textContent = remainingSeconds;
-
-      if (remainingMilliseconds <= 0) {
-        timerBar.style.width = "0%";
-        console.log('Time is up!');
-        clearInterval(updateTimerId);
-        outOfTimeMessage();
-        stopDrawing();
-      } else {
-
-        // Show the timer bar container when the timer is above 0
-        document.getElementById("timer-bar-container").classList.remove("hidden");
-
-        // Hide the "Oh dear" and "Success" pages if the timer is not at 0
-        if (!isTimerAtZero) {
-          const ohNoPage = document.getElementById("oh-no-page");
-          if (ohNoPage) {
-            ohNoPage.style.display = "none";
-          }
-          const successPage = document.getElementById("success-page");
-          if (successPage) {
-            successPage.style.display = "none";
-          }
-        }
-      }
-    }
-
     // Define the function to draw a shape at the center of the canvas
     function drawShape() {
+      console.log("current function: drawShape");
 
       // Check if the confidence page is being displayed
       if (document.getElementById("confidence").style.display === "block") {
@@ -313,6 +300,10 @@
 
       // Clear the canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      setTimeout(function() {
+        console.log("in delay before first shape");
+      }, 400); // 400 ms delay before the first shape
 
       // Generate a random shape index
       const randomShapeIndex = Math.floor(Math.random() * shapes.length);
@@ -429,7 +420,7 @@
 
             // Schedule the next shape to be drawn after the standard delay and pause
             setTimeout(drawShape, shapeDelay + 100); // shapeDelay + 100 ms pause
-          }, 400); // 400 ms delay before the first shape
+          }, 400); // was 400 for: "400 ms delay before the first shape"
 
         }
      }
@@ -437,49 +428,86 @@
     }
 
 
+    // Function to update the timer display and timer bar
+    function updateTimerDisplay() {
+      console.log("current function: updateTimerDisplay");
+      const timerBar = document.getElementById("timer-bar");
+      const currentTime = Date.now();
+      passedTime = currentTime - startTime;
+      let remainingMilliseconds = countdownMilliseconds - passedTime;
+      remainingMilliseconds = Math.max(remainingMilliseconds, 0);
+
+      const filledPercentage = Math.max(((countdownMilliseconds - passedTime) / countdownMilliseconds) * 100, 0);
+      timerBar.style.width = `${filledPercentage}%`;
+      console.log("filledPercentage:", filledPercentage);
+
+      const remainingSeconds = Math.ceil(remainingMilliseconds / 1000);
+      document.getElementById("timer").textContent = remainingSeconds;
+
+      console.log("remainingMilliseconds:", remainingMilliseconds);
+      if (remainingMilliseconds <= 0) {
+        timerBar.style.width = "0%";
+        console.log('Time is up!');
+        clearInterval(updateTimerId);
+        outOfTimeMessage();
+      } else {
+        // Show the timer bar container when the timer is above 0
+        document.getElementById("timer-bar-container").classList.remove("hidden");
+        // Hide the "Oh dear" and "Success" pages if the timer is not at 0
+        if (!isTimerAtZero) {
+          document.getElementById("oh-no-page").style.display = "none";
+          document.getElementById("success-page").style.display = "none";
+        }
+      }
+    }
+
+
+
+
     // Function to start the shapes/timer sequence
-    function startShapesTimer() {
+    function setShapesTimer() {
+      console.log("current function: setShapesTimer");
+
       // Reset canvas and other elements
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      document.getElementById("overlay").style.display = "none";
-      document.getElementById("confidence").style.display = "none";
-      document.getElementById("letter-blue").style.display = "block";
-      document.getElementById("letter-red").style.display = "block";
-      document.getElementById("timer").style.display = "block";
+//      ctx.clearRect(0, 0, canvas.width, canvas.height);
+//      document.getElementById("overlay").style.display = "none";
+//      document.getElementById("confidence").style.display = "none";
+//      document.getElementById("letter-blue").style.display = "block";
+//      document.getElementById("letter-red").style.display = "block";
+//      document.getElementById("timer").style.display = "block";
 
       // Randomize the countdown duration between tMin and tMax milliseconds
       countdownMilliseconds = Math.floor(Math.random() * (tMax - tMin + 1)) + tMin;
       // Calculate the remaining milliseconds on the countdown
       remainingMilliseconds = countdownMilliseconds - (Date.now() - startTime);
 
+      // Get the timer bar element
+      const timerBar = document.getElementById("timer-bar");
+      // Set the animation duration
+      timerBar.style.animationDuration = `${countdownMilliseconds}ms`;
+
       // Start drawing shapes
-      shapeCounter = 0;
+//      shapeCounter = 0;
       document.body.style.backgroundColor = "transparent"; // Reset background color
 
     }
 
-    // Function to hide the intro page and start the trial
+    // Function to hide the intro page and start the trial, when start button is pressed
     function startTrial() {
-      const introPage = document.getElementById("intro=page");
-      if (introPage) {
-        introPage.style.display = "none";
-      }
+      console.log("current function: startTrial");
 
-      // Start the trial here
-      startShapesTimer();
-      run();
-    }
+      // Hide the intro page
+      document.getElementById("intro-page").style.display = "none";
 
-    // Add event listener to the "Start" button
-    const startButton = document.getElementById("start-button");
-    if (startButton) {
-      startButton.addEventListener("click", startTrial);
-      startShapesTimer();
+      // Start the trial
+      setShapesTimer();
       run();
+
     }
 
     // Function to handle arrow key presses and show the confidence page
     function showConfidencePage() {
+      console.log("current function: showConfidencePage");
       if (!isPaused) {
         isPaused = true; // Pause the timer
       }
@@ -499,12 +527,13 @@
       }
 
       // And just in case Oh No message is there, hide it
-      const ohNoPage = document.getElementById("oh-no-page").style.display = "none";
+      document.getElementById("oh-no-page").style.display = "none";
 
     }
 
     // Function to submit confidence and show success page
     function submitConfidence(confidence) {
+      console.log("current function: submitConfidence");
 
       // Hide all the elements on the screen
       document.getElementById("letter-blue").style.display = "none";
@@ -528,6 +557,7 @@
 
     // Function to handle the "Oh dear" message when the timer reaches 0
     function outOfTimeMessage() {
+        console.log("current function: outOfTimeMessage");
         // Hide elements and stop drawing
         stopDrawing();
         isPaused = true;
@@ -536,10 +566,9 @@
         isTimerAtZero = true;
 
         // display the Oh No message
-        const ohNoPage = document.getElementById("oh-no-page");
-        ohNoPage.style.display = "block";
+        document.getElementById("oh-no-page").style.display = "block";
 
-        // hide the time bar and Confidence page
+        // hide the timer bar and Confidence page
         document.getElementById("timer-bar").style.display = "none";;
         document.getElementById("confidence").style.display = "none";
 
@@ -552,6 +581,7 @@
 
     // Function to handle the "Oh dear" message when the timer reaches 0
     function maxShapesMessage() {
+        console.log("current function: maxShapesMessage");
         // Hide elements and stop drawing
         stopDrawing();
         isPaused = true;
@@ -575,6 +605,7 @@
 
     // Function to continue to the next trial from 'Oh dear' page (after time expires)
     function continueToNextTrial() {
+      console.log("current function: continueToNextTrial");
       // Remove the "Oh dear" page
       const ohNoPage = document.getElementById("oh-no-page");
       if (ohNoPage) {
@@ -593,7 +624,7 @@
       startTime = Date.now();
 
       // Restart the shapes/timer sequence for the next trial
-      startShapesTimer();
+      setShapesTimer();
 
       // Update timer display (number and bar, if visible)
 //      const timerElement = document.getElementById("timer");
@@ -611,35 +642,19 @@
 
 // BEGIN EXECUTION CODE
 
-    // Hide the "Oh dear" and "Success" pages
-    const ohNoPage = document.getElementById("oh-no-page");
-    if (ohNoPage) {
-      ohNoPage.style.display = "none";
+    // Hide the various messages/pages we don't want to be visible yet
+    document.getElementById("oh-no-page").style.display = "none";;
+    document.getElementById("success-page").style.display = "none";
+    document.getElementById("max-shapes-page").style.display = "none";
+
+    // Show the welcome page
+    document.getElementById("intro-page").style.display = "block";
+
+    // Add event listener to the "Start" button, and wait
+    const startButton = document.getElementById("start-button");
+    if (startButton) {
+      startButton.addEventListener("click", startTrial);
     }
-    const successPage = document.getElementById("success-page");
-    if (successPage) {
-      successPage.style.display = "none";
-    }
-    const maxShapesPage = document.getElementById("max-shapes-page");
-    if (maxShapesPage) {
-      maxShapesPage.style.display = "none";
-    }
-
-    // Record the start time
-    startTime = Date.now();
-
-    // Start timer
-//    startShapesTimer();  //we don't need this here if it's called in startTrial
-
-    // Update timer display (number and bar, if visible)
-//    const timerElement = document.getElementById("timer");
-//    timerElement.textContent = Math.ceil(remainingMilliseconds / 1000);
-//    updateTimerDisplay();
-
-    // Call the updateTimer function now and every N ms
-//    updateTimerId = setInterval(updateTimer, 10);
-
-//    run();
 
 
   // Close the DOMContentLoaded event listener
