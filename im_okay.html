@@ -46,7 +46,6 @@
       font-size: 20px;
       z-index: 1;
     }
-
     #confidence {
       position: fixed;
       top: 10px;
@@ -73,33 +72,13 @@
       margin-top: 10px;
     }
     #timer-bar {
-      /* height: 100%;
+      height: 100%;
       width: 100%;
       background-color: #000000;
-      transition: width 1s linear; */
-      animation-name: timerAnimation;
-      animation-timing-function: linear;
-      animation-fill-mode: forwards;
     }
     #timer-bar-container.hidden {
       display: none;
     }
-
-    @keyframes timerAnimation {
-      0% {
-        width: 100%;
-      }
-      100% {
-        width: 0%;
-      }
-    }
-        /* #timer-bar {
-        animation-name: timerAnimation;
-        animation-timing-function: linear;
-        animation-fill-mode: forwards;
-        } */
-
-
   </style>
 </head>
 <body>
@@ -165,7 +144,6 @@
     const ctx = canvas.getContext("2d"); // Define the ctx variable
 
     // Declare timer-related variables
-    let updateTimerId;
     let passedTime = 0; // Initialize passedTime
     let isPaused = false; // Flag to indicate if the timer is paused
     let arrowKeyPressed = false; // Flag to indicate if an arrow key was pressed
@@ -266,6 +244,7 @@
   // Function to stop drawing shapes and show confidence message
   function stopDrawing() {
     console.log("current function: stopDrawing");
+    console.log(isPaused);
     document.getElementById("letter-blue").style.display = "none"; // Hide blue letter
     document.getElementById("letter-red").style.display = "none"; // Hide red letter
     document.getElementById("canvas").style.display = "none"; // Hide canvas
@@ -309,7 +288,7 @@
       const randomShapeIndex = Math.floor(Math.random() * shapes.length);
 
       // Update the timer display
-      updateTimerDisplay();
+      requestAnimationFrame(updateTimerDisplay);
 
       // Get the current shape and its log likelihood ratio
       const currentShape = shapes[randomShapeIndex];
@@ -427,32 +406,58 @@
 
     }
 
-
-    // Function to update the timer display and timer bar
     function updateTimerDisplay() {
-      console.log("current function: updateTimerDisplay");
+//      console.log("current function: updateTimerDisplay");
       const timerBar = document.getElementById("timer-bar");
       const currentTime = Date.now();
-      passedTime = currentTime - startTime;
+      const passedTime = currentTime - startTime;
+      const filledPercentage = Math.max(((countdownMilliseconds - passedTime) / countdownMilliseconds) * 100, 0);
+
+      // from old ver, this helps create a text countdown (seconds) and prevents it from going negative
       let remainingMilliseconds = countdownMilliseconds - passedTime;
       remainingMilliseconds = Math.max(remainingMilliseconds, 0);
-
-      const filledPercentage = Math.max(((countdownMilliseconds - passedTime) / countdownMilliseconds) * 100, 0);
-      timerBar.style.width = `${filledPercentage}%`;
-      console.log("filledPercentage:", filledPercentage);
-
       const remainingSeconds = Math.ceil(remainingMilliseconds / 1000);
       document.getElementById("timer").textContent = remainingSeconds;
 
-      console.log("remainingMilliseconds:", remainingMilliseconds);
+      // Update the timer bar width
+      timerBar.style.width = `${filledPercentage-40}%`;
+      // resorted to this kluge '-40' after an hour of attempts to fix the mismatch
+      // between bar appearance and filledPercentage/timerBar.style.width
+
+//      console.log("filledPercentage:", filledPercentage);
+
+      // // temp: stop animation close to the 'incorrect' end
+      // if (filledPercentage<20) {
+      //     console.log("filledPercentage:", filledPercentage);
+      //     console.log("remainingMilliseconds:", remainingMilliseconds);
+      //     console.log("passedTime", passedTime);
+      //     console.log("countdownMilliseconds", countdownMilliseconds);
+      //     debugger;
+      //
+      //     // timerBar.style.width = `${0}%`;
+      //     // console.log(timerBar.style.width);
+      //     // timerBar.style.width = `${filledPercentage}%`;
+      //     // console.log(timerBar.style.width);
+      //     // timerBar.style.width = `${0}%`;
+      // }
+
+      // Check if the animation is complete
+//      if (passedTime >= countdownMilliseconds) {
       if (remainingMilliseconds <= 0) {
+
+        // Animation is complete, you can perform any necessary actions here
+        console.log('Animation complete');
         timerBar.style.width = "0%";
         console.log('Time is up!');
-        clearInterval(updateTimerId);
         outOfTimeMessage();
+
       } else {
+        // Continue the animation by requesting the next frame
+        requestAnimationFrame(updateTimerDisplay);
+
         // Show the timer bar container when the timer is above 0
-        document.getElementById("timer-bar-container").classList.remove("hidden");
+        // document.getElementById("timer-bar-container").classList.remove("hidden");
+
         // Hide the "Oh dear" and "Success" pages if the timer is not at 0
         if (!isTimerAtZero) {
           document.getElementById("oh-no-page").style.display = "none";
@@ -460,6 +465,45 @@
         }
       }
     }
+
+
+
+
+    //
+    // // Function to update the timer display and timer bar OLD VER
+    // function updateTimerDisplay() {
+    //   console.log("current function: updateTimerDisplay");
+    //   const timerBar = document.getElementById("timer-bar");
+    //   const currentTime = Date.now();
+    //   passedTime = currentTime - startTime;
+    //   let remainingMilliseconds = countdownMilliseconds - passedTime;
+    //   remainingMilliseconds = Math.max(remainingMilliseconds, 0);
+    //
+    //   const filledPercentage = Math.max(((countdownMilliseconds - passedTime) / countdownMilliseconds) * 100, 0);
+    //   timerBar.style.width = `${filledPercentage}%`;
+    //   console.log("filledPercentage:", filledPercentage);
+    //
+    //   const remainingSeconds = Math.ceil(remainingMilliseconds / 1000);
+    //   document.getElementById("timer").textContent = remainingSeconds;
+    //
+    //   console.log("remainingMilliseconds:", remainingMilliseconds);
+    //   if (remainingMilliseconds <= 0) {
+    //     timerBar.style.width = "0%";
+    //     console.log('Time is up!');
+    //     clearInterval(updateTimerId);
+    //     outOfTimeMessage();
+    //   } else {
+    //
+    //     // Show the timer bar container when the timer is above 0
+    //     document.getElementById("timer-bar-container").classList.remove("hidden");
+    //
+    //     // Hide the "Oh dear" and "Success" pages if the timer is not at 0
+    //     if (!isTimerAtZero) {
+    //       document.getElementById("oh-no-page").style.display = "none";
+    //       document.getElementById("success-page").style.display = "none";
+    //     }
+    //   }
+    // }
 
 
 
@@ -480,11 +524,6 @@
       countdownMilliseconds = Math.floor(Math.random() * (tMax - tMin + 1)) + tMin;
       // Calculate the remaining milliseconds on the countdown
       remainingMilliseconds = countdownMilliseconds - (Date.now() - startTime);
-
-      // Get the timer bar element
-      const timerBar = document.getElementById("timer-bar");
-      // Set the animation duration
-      timerBar.style.animationDuration = `${countdownMilliseconds}ms`;
 
       // Start drawing shapes
 //      shapeCounter = 0;
@@ -625,14 +664,6 @@
 
       // Restart the shapes/timer sequence for the next trial
       setShapesTimer();
-
-      // Update timer display (number and bar, if visible)
-//      const timerElement = document.getElementById("timer");
-//      timerElement.textContent = Math.ceil(remainingMilliseconds / 1000);
-      updateTimerDisplay();
-
-      // Call the updateTimer function now and every N ms
-      updateTimerId = setInterval(updateTimer, 10);
 
       // Run it!
       run();
