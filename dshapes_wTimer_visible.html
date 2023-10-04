@@ -56,15 +56,6 @@
       display: none;
       z-index: 2;
     }
-    #confidence-buttons {
-      text-align: center;
-      margin-top: 10px;
-    }
-    #confidence-buttons button {
-      display: inline-block;
-      margin-bottom: 0 10px;
-      padding: 5px 10px;
-    }
     #timer-bar-container {
       width: 100%;
       height: 10px;
@@ -121,14 +112,12 @@
     <div id="timer-bar"></div>
   </div>
   <div id="confidence" style="display: none;">
-    How confident do you feel<br>(1 = a guess, 5 = 100% sure you're right)?<br>
-    <div id="confidence-buttons">
-      <button>1</button>
-      <button>2</button>
-      <button>3</button>
-      <button>4</button>
-      <button>5</button>
-    </div>
+    How confident do you feel?  Press a number key 1-5:
+    <br>(1) A complete guess (50% chance of being correct, or worse)
+    <br>(2) Fairly uncertain (60% chance of being correct)
+    <br>(3) Pretty good guess (70% chance of being correct)
+    <br>(4) Fairly confident (80% chance of being correct)
+    <br>(5) Very confident (>90% chance of being correct)
   </div>
   <div id="oh-no-page" class="page">
       Oh dear, you ran out of time! Click the button below to move on to the next trial :(<br>
@@ -229,9 +218,8 @@
         console.log(`Number ${numberPressed} key pressed`); // Log the event
         selectedConfidence = numberPressed;
 
-        // Hide the confidence blocks
+        // Hide the confidence page
         document.getElementById("confidence").style.display = "none";
-        document.getElementById("confidence-buttons").style.display = "none";
 
         // Display the success page with "Good job" message and next trial button
         document.getElementById("success-page").style.display = "block";
@@ -506,9 +494,8 @@
       document.getElementById("timer-bar").style.display = "none";
       document.getElementById("timer-bar-container").style.display = "none";
 
-      // Show the confidence blocks and wait for key press
+      // Show the confidence page and wait for key press
       document.getElementById("confidence").style.display = "block";
-      document.getElementById("confidence-buttons").style.display = "block";
 
     }
 
