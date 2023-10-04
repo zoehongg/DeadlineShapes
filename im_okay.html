@@ -83,18 +83,33 @@
 </head>
 <body>
   <div id="intro-page" class="page">
-    <p><i>Welcome! Thank you for choosing to participate in this experiment. Please read all instructions before starting:</i></p>
-    <p>Let's play a game. Take a look at the diagram below. Each shape represents a different concentration of a color.
-      Some are more/less concentrated red while others are more/less concentrated blue.</p>
-    <p>When you click the start button, a series of shapes will appear on your screen. Please follow along with the shapes
-      to figure out whether more red/blue is shown. Click on the left arrow key if you think that there's more red. Click
-      on the right arrow key if you think there's more blue.</p>
-    <p>Once you press an arrow key, you will be asked how confident you feel in your decision (how "correct" do you think
-      you were?). Click one of the buttons that appear on the screen to indicate whether you feel completely certain that
-      your answer was a complete guess (1) or if you believe with utmost certainty that you were right (5).</p>
-    </p><b>CAUTION<b><br>You have limited time to complete the task, so be careful! Sometimes, you might see how much time
-      you have left. Other times, you might not...<p>
-    <p>Click the start button to play!</p>
+      <p><i>Welcome! Thank you for choosing to participate in this experiment. Please read all instructions before starting:</i></p>
+
+      <p>Let's play a game. When you click Start you will see a random sequence of shapes, each a different shade of red or blue.
+      Your goal is to figure out whether the current sequence contains more 'redness' or more 'blueness' on average,
+      and answer as quickly and accurately as possible using the keyboard. Press the Right arrow key if you think there's more Red,
+      or the Left arrow key if you think there's more Blue. A correct answer yields 1 point, incorrect is 0 points.</p>
+
+      <p>For example, when the correct answer is "red", a given shape is more likely to be red, but <i>only slightly</i> more likely.
+      Darker (more saturated) colors should be treated as stronger evidence for that color, versus lighter (less saturated) ones.
+      So the best strategy is to wait until you have gathered enough evidence to make a good guess, NOT to guess quickly according
+      to the first couple shapes.</p>
+
+      <p>But don't wait too long! You have limited time to complete each trial, and if you run out, you get zero points for that trial.
+      This 'deadline' occurs at a random time between 5 and 10 seconds, as indicated by the countdown and shrinking timer bar.</p>
+
+      Lastly, once you press an arrow key you will be asked how confident you feel in your decision. Press a number between 1 and 5
+      to indicate whether you feel your answer was:
+      <br>(1) A complete guess (50/50 chance of being correct, or worse)
+      <br>(2) Fairly uncertain (60% chance of being correct)
+      <br>(3) Pretty good guess (70% chance of being correct)
+      <br>(4) Fairly confident (80% chance of being correct)
+      <br>(5) Very confident (>90% chance of being correct)
+
+      <p>After you submit your confidence rating, a new trial will begin, with a new random sequence and random correct answer.
+      You can complete as few or as many trials as you like, up to a maximum of 40.</p>
+
+      <p>Okay ready? Click the start button to begin!</p>
     <button id="start-button">Start!</button>
   </div>
   <div id="letter-blue">B</div>
@@ -116,15 +131,15 @@
     </div>
   </div>
   <div id="oh-no-page" class="page">
-      Oh dear, you ran out of time! Press the button below to move on to the next trial :(<br>
+      Oh dear, you ran out of time! Click the button below to move on to the next trial :(<br>
       <button id="continue-button">Continue</button>
   </div>
   <div id="success-page" class="page">
-      Good job! Are you ready for the next trial?<br>
+      Good job! Click the button when ready for the next trial.<br>
       <button id="next-trial-button">Next Trial</button>
   </div>
   <div id="max-shapes-page" class="page">
-      Oops, you didn't answer for a long time. You must have not been paying attention. That's okay. Just hit the Continue button when ready.<br>
+      Oops, you didn't answer for a long time. You must have not been paying attention. That's okay. Just click Continue when ready.<br>
       <button id="continue-button">Continue</button>
   </div>
 </body>
@@ -135,9 +150,7 @@
   // Wrap JavaScript code inside a DOMContentLoaded event listener
   document.addEventListener("DOMContentLoaded", function() {
 
-
 // BEGIN VARIABLE DECLARATIONS
-
 
     // Set up the canvas and declare the ctx variable
     const canvas = document.getElementById("canvas");
@@ -146,6 +159,7 @@
     // Declare timer-related variables
     let passedTime = 0; // Initialize passedTime
     let isPaused = false; // Flag to indicate if the timer is paused
+    let isOnConfPage = false; // Flag to indicate if the timer is paused
     let arrowKeyPressed = false; // Flag to indicate if an arrow key was pressed
     let isOutOfTime = false; // Flag to track if time is out    [CF: not sure why there are 3 timer flags]
     let isTimerAtZero = false; // Initialize the flag as false  [CF: not sure why there are 3 timer flags]
@@ -170,7 +184,7 @@
 
     // Initialized other variables
     let shapeCounter = 0; // Counter variable for the number of shapes drawn
-    const shapeDelay = 400; // Delay between showing shapes in ms
+    const shapeDelay = 300; // Delay between showing shapes in ms
     const maxShapes = 20; // Max number of shapes (20)
     const tMin = 2000; // Min duration of timer (deadline)
     const tMax = 5000; // Max duration of timer (deadline)
@@ -196,21 +210,43 @@
         // Show the confidence page without resetting the timer
         showConfidencePage();
 
-        // Check if the continueButton element exists before adding the event listener
-        const continueButton = document.getElementById("continue-button");
-        if (continueButton) {
-          continueButton.addEventListener("click", continueToNextTrial);
-        }
+// this can't be right; after arrow press is conf, not continue button
+        // // Check if the continueButton element exists before adding its event listener
+        // const continueButton = document.getElementById("continue-button");
+        // if (continueButton) {
+        //   continueButton.addEventListener("click", continueToNextTrial);
+        // }
       }
     });
 
-    // Attach event listeners to the buttons (capture the clicked button's value)
-    confidenceButtons.forEach((button, index) => {
-      button.addEventListener('click', () => {
-        selectedConfidence = index + 1; // Store the selected confidence value
-        submitConfidence(selectedConfidence); // Call the submitConfidence function
-      });
+
+    // Add event listener for number key presses when on confidence page
+    window.addEventListener("keydown", function(event) {
+      if (["Digit1", "Digit2", "Digit3", "Digit4", "Digit5"].includes(event.code) && (isOnConfPage == true)) {
+
+        const numberPressed = event.code.slice(-1); // Extract the number from the event code
+        console.log(`Number ${numberPressed} key pressed`); // Log the event
+
+      // // Show the continue button [probably unnecessary]
+      // document.getElementById("continue-button")
+
+
+      // Check if the continueButton element exists before adding its event listener
+      const continueButton = document.getElementById("continue-button");
+      if (continueButton) {
+        continueButton.addEventListener("click", continueToNextTrial);
+      }
+    }
     });
+
+
+    // OLD VER
+    // confidenceButtons.forEach((button, index) => {
+    //   button.addEventListener('click', () => {
+    //     selectedConfidence = index + 1; // Store the selected confidence value
+    //     submitConfidence(selectedConfidence); // Call the submitConfidence function
+    //   });
+    // });
 
 
 // BEGIN HELPER FUNCTIONS
@@ -260,6 +296,8 @@
     // Wrap the main code inside a function that handles the repeating pattern
     function run() {
       console.log("current function: run");
+      // Show the canvas
+      document.getElementById("canvas").style.display = "block";
 
       // Set the start time
       startTime = Date.now();
@@ -282,7 +320,7 @@
 
       setTimeout(function() {
         console.log("in delay before first shape");
-      }, 400); // 400 ms delay before the first shape
+      }, 300); // delay before the first shape
 
       // Generate a random shape index
       const randomShapeIndex = Math.floor(Math.random() * shapes.length);
@@ -398,8 +436,8 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             // Schedule the next shape to be drawn after the standard delay and pause
-            setTimeout(drawShape, shapeDelay + 100); // shapeDelay + 100 ms pause
-          }, 400); // was 400 for: "400 ms delay before the first shape"
+            setTimeout(drawShape, shapeDelay + 80); // shapeDelay + pause
+          }, shapeDelay); //
 
         }
      }
@@ -424,25 +462,8 @@
       // resorted to this kluge '-40' after an hour of attempts to fix the mismatch
       // between bar appearance and filledPercentage/timerBar.style.width
 
-//      console.log("filledPercentage:", filledPercentage);
-
-      // // temp: stop animation close to the 'incorrect' end
-      // if (filledPercentage<20) {
-      //     console.log("filledPercentage:", filledPercentage);
-      //     console.log("remainingMilliseconds:", remainingMilliseconds);
-      //     console.log("passedTime", passedTime);
-      //     console.log("countdownMilliseconds", countdownMilliseconds);
-      //     debugger;
-      //
-      //     // timerBar.style.width = `${0}%`;
-      //     // console.log(timerBar.style.width);
-      //     // timerBar.style.width = `${filledPercentage}%`;
-      //     // console.log(timerBar.style.width);
-      //     // timerBar.style.width = `${0}%`;
-      // }
-
       // Check if the animation is complete
-//      if (passedTime >= countdownMilliseconds) {
+//      if (passedTime >= countdownMilliseconds) { // are these conditions identical?
       if (remainingMilliseconds <= 0) {
 
         // Animation is complete, you can perform any necessary actions here
@@ -456,7 +477,7 @@
         requestAnimationFrame(updateTimerDisplay);
 
         // Show the timer bar container when the timer is above 0
-        // document.getElementById("timer-bar-container").classList.remove("hidden");
+        // document.getElementById("timer-bar-container").classList.remove("hidden"); // what is the 'container?'
 
         // Hide the "Oh dear" and "Success" pages if the timer is not at 0
         if (!isTimerAtZero) {
@@ -467,58 +488,9 @@
     }
 
 
-
-
-    //
-    // // Function to update the timer display and timer bar OLD VER
-    // function updateTimerDisplay() {
-    //   console.log("current function: updateTimerDisplay");
-    //   const timerBar = document.getElementById("timer-bar");
-    //   const currentTime = Date.now();
-    //   passedTime = currentTime - startTime;
-    //   let remainingMilliseconds = countdownMilliseconds - passedTime;
-    //   remainingMilliseconds = Math.max(remainingMilliseconds, 0);
-    //
-    //   const filledPercentage = Math.max(((countdownMilliseconds - passedTime) / countdownMilliseconds) * 100, 0);
-    //   timerBar.style.width = `${filledPercentage}%`;
-    //   console.log("filledPercentage:", filledPercentage);
-    //
-    //   const remainingSeconds = Math.ceil(remainingMilliseconds / 1000);
-    //   document.getElementById("timer").textContent = remainingSeconds;
-    //
-    //   console.log("remainingMilliseconds:", remainingMilliseconds);
-    //   if (remainingMilliseconds <= 0) {
-    //     timerBar.style.width = "0%";
-    //     console.log('Time is up!');
-    //     clearInterval(updateTimerId);
-    //     outOfTimeMessage();
-    //   } else {
-    //
-    //     // Show the timer bar container when the timer is above 0
-    //     document.getElementById("timer-bar-container").classList.remove("hidden");
-    //
-    //     // Hide the "Oh dear" and "Success" pages if the timer is not at 0
-    //     if (!isTimerAtZero) {
-    //       document.getElementById("oh-no-page").style.display = "none";
-    //       document.getElementById("success-page").style.display = "none";
-    //     }
-    //   }
-    // }
-
-
-
-
     // Function to start the shapes/timer sequence
     function setShapesTimer() {
       console.log("current function: setShapesTimer");
-
-      // Reset canvas and other elements
-//      ctx.clearRect(0, 0, canvas.width, canvas.height);
-//      document.getElementById("overlay").style.display = "none";
-//      document.getElementById("confidence").style.display = "none";
-//      document.getElementById("letter-blue").style.display = "block";
-//      document.getElementById("letter-red").style.display = "block";
-//      document.getElementById("timer").style.display = "block";
 
       // Randomize the countdown duration between tMin and tMax milliseconds
       countdownMilliseconds = Math.floor(Math.random() * (tMax - tMin + 1)) + tMin;
@@ -547,6 +519,8 @@
     // Function to handle arrow key presses and show the confidence page
     function showConfidencePage() {
       console.log("current function: showConfidencePage");
+      isOnConfPage = true;
+
       if (!isPaused) {
         isPaused = true; // Pause the timer
       }
@@ -646,10 +620,18 @@
     function continueToNextTrial() {
       console.log("current function: continueToNextTrial");
       // Remove the "Oh dear" page
-      const ohNoPage = document.getElementById("oh-no-page");
-      if (ohNoPage) {
-        ohNoPage.style.display = "none";
-      }
+      document.getElementById("oh-no-page").style.display = "none";
+
+      // Reset canvas and other elements
+     ctx.clearRect(0, 0, canvas.width, canvas.height);
+     document.getElementById("overlay").style.display = "none";
+     document.getElementById("confidence").style.display = "none";
+     document.getElementById("letter-blue").style.display = "block";
+     document.getElementById("letter-red").style.display = "block";
+     document.getElementById("timer").style.display = "block";
+     document.getElementById("timer-bar").style.display = "block";
+     document.getElementById("timer-bar-container").style.display = "block";
+
 
       // Reset variables and restart the shapes/timer sequence
       shapeCounter = 0;
@@ -658,9 +640,6 @@
       arrowKeyPressed = false;
       isOutOfTime = false;
       isTimerAtZero = false;
-
-      // Reset the start time!
-      startTime = Date.now();
 
       // Restart the shapes/timer sequence for the next trial
       setShapesTimer();
@@ -677,6 +656,12 @@
     document.getElementById("oh-no-page").style.display = "none";;
     document.getElementById("success-page").style.display = "none";
     document.getElementById("max-shapes-page").style.display = "none";
+    document.getElementById("letter-blue").style.display = "none";
+    document.getElementById("letter-red").style.display = "none";
+    document.getElementById("timer").style.display = "none";
+    document.getElementById("timer-bar").style.display = "none";
+    document.getElementById("timer-bar-container").style.display = "none";
+    document.getElementById("canvas").style.display = "none";;
 
     // Show the welcome page
     document.getElementById("intro-page").style.display = "block";
