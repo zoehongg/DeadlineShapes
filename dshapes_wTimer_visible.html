@@ -176,7 +176,10 @@
     const maxShapes = 20; // Max number of shapes (20)
     const tMin = 2000; // Min duration of timer (deadline)
     const tMax = 5000; // Max duration of timer (deadline)
-//    let currentShapeTimeoutId; // Timeout ID for controlling shape drawing
+    const samplingDistribution_blue = [0.055, 0.11, 0.2, 0.365, 0.18, 0.06, 0.02, 0.01];
+    const samplingDistribution_red =  [0.01, 0.02, 0.06, 0.18, 0.365, 0.2, 0.11, 0.055];
+    const choiceProbs = [0.5, 0.5];
+
     let startTime; // Start time of shape drawing
 
 
@@ -229,7 +232,6 @@
     });
 
 
-
 // BEGIN HELPER FUNCTIONS
 
   // Function to stop drawing shapes
@@ -241,7 +243,18 @@
     document.getElementById("timer").style.display = "none"; // Hide timer
 
   }
- 
+
+  function sample(distribution) {
+    const randomNumber = Math.random();
+    let cumulative = 0;
+    for (let i = 0; i < distribution.length; i++) {
+      cumulative += distribution[i];
+      if (randomNumber < cumulative) {
+        return i;
+      }
+    }
+  }
+
 
 // BEGIN MAIN FUNCTIONS
 
@@ -277,17 +290,26 @@
       // Clear the canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      setTimeout(function() {
-      }, 300); // delay before the first shape
-
-      // Generate a random shape index
-      const randomShapeIndex = Math.floor(Math.random() * shapes.length);
-
       // Update the timer display
       requestAnimationFrame(updateTimerDisplay);
 
+
+      setTimeout(function() {
+      }, 300); // delay before the first shape
+
+      const correctChoice = sample(choiceProbs);
+      let currentShape
+      if (correctChoice==0) {
+        currentShape = shapes[sample(samplingDistribution_blue)];
+      } else if (correctChoice==1) {
+        currentShape = shapes[sample(samplingDistribution_red)];
+      }
+
+      // Generate a random shape index
+//      const randomShapeIndex = Math.floor(Math.random() * shapes.length);
+
       // Get the current shape and its log likelihood ratio
-      const currentShape = shapes[randomShapeIndex];
+//      const currentShape = shapes[randomShapeIndex];
       const currentShapeLLR = currentShape.llr;
 
       // Calculate the concentration value based on the LLR
@@ -451,9 +473,12 @@
     }
 
 
-    // Function to start the shapes/timer sequence
+    // Randomly select which color is correct, and the deadline for this trial
     function setShapesTimer() {
       console.log("current function: setShapesTimer");
+
+      const correctChoice = sample(choiceProbs);
+      console.log("correctChoice",correctChoice);
 
       // Randomize the countdown duration between tMin and tMax milliseconds
       countdownMilliseconds = Math.floor(Math.random() * (tMax - tMin + 1)) + tMin;
