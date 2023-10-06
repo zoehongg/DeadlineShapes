@@ -131,6 +131,9 @@
       Oops, you didn't answer for a long time. You must have not been paying attention. That's okay. Just click Continue when ready.<br>
       <button id="continue-button">Continue</button>
   </div>
+  <div id="all-done-page" class="page">
+      Congratulations! You've finished one group of trials. Be proud of yourself :)<br>
+  </div>
 </body>
 </html>
 
@@ -147,6 +150,7 @@
 
     // Declare timer-related variables
     let passedTime = 0; // Initialize passedTime
+    let trialNumber = 1 // Initialize trialNumber
     let isPaused = true; // Flag to indicate if the timer is paused
     let isOnConfPage = false; // Flag to indicate if on confidence rating page
     let isTimerAtZero = false; // Initialize the flag as false
@@ -157,6 +161,9 @@
     let choice;
     let reactionTime;
     let selectedConfidence;
+
+    // Set the number of trials
+    const maxTrials = 50
 
     // Define the shapes and their corresponding log likelihood ratios
     const shapes = [
@@ -576,29 +583,40 @@
     function continueToNextTrial() {
       console.log("current function: continueToNextTrial");
 
-      // hide the various pages we don't want to see
-      document.getElementById("oh-no-page").style.display = "none";
-      document.getElementById("max-shapes-page").style.display = "none";
-      document.getElementById("confidence").style.display = "none";
-      document.getElementById("success-page").style.display = "none";
+      // Check if the number of completed trials is less than 40
+      if (trialNumber < maxTrials) {
+        // Completed trial counter!
+        trialNumber++;
 
-      // Reset canvas and other elements
-     ctx.clearRect(0, 0, canvas.width, canvas.height);
-     document.getElementById("overlay").style.display = "none";
-     document.getElementById("timer-bar").style.width = `${100}%`;
+        // hide the various pages we don't want to see
+        document.getElementById("oh-no-page").style.display = "none";
+        document.getElementById("max-shapes-page").style.display = "none";
+        document.getElementById("all-done-page").style.display = "none";
+        document.getElementById("confidence").style.display = "none";
+        document.getElementById("success-page").style.display = "none";
 
-      // Reset variables and restart the shapes/timer sequence
-      shapeCounter = 0;
-      passedTime = 0;
-      isPaused = false;
-      isOnConfPage = false;
-      isTimerAtZero = false;
+        // Reset canvas and other elements
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        document.getElementById("overlay").style.display = "none";
+        document.getElementById("timer-bar").style.width = `${100}%`;
 
-      // Restart the shapes/timer sequence for the next trial
-      setShapesTimer();
+        // Reset variables and restart the shapes/timer sequence
+        shapeCounter = 0;
+        passedTime = 0;
+        isPaused = false;
+        isOnConfPage = false;
+        isTimerAtZero = false;
 
-      // Run it!
-      run();
+        // Restart the shapes/timer sequence for the next trial
+        setShapesTimer();
+
+        // Run it!
+        run();
+      } else {
+        // once 40 trials have been completed, show the message in the console and browser
+        console.log("Maximum number of trials (40) reached!")
+        document.getElementById("all-done-page").style.display = "block";
+      }
 
     }
 
@@ -609,6 +627,7 @@
     document.getElementById("oh-no-page").style.display = "none";;
     document.getElementById("success-page").style.display = "none";
     document.getElementById("max-shapes-page").style.display = "none";
+    document.getElementById("all-done-page").style.display = "none";
     document.getElementById("letter-blue").style.display = "none";
     document.getElementById("letter-red").style.display = "none";
     document.getElementById("timer").style.display = "none";
