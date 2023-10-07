@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" type="text/css" href="styles.css"> <!-- Linking the CSS file here -->
+  <style>
+  #canvas {
+    display: block;
+    margin: auto;
+    border: 1px solid black;
+  }
+  #overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: white;
+    z-index: 9999;
+    display: none;
+    }
+    #letter-blue {
+      position: absolute;
+      top: 50%;
+      left: 50px;
+      transform: translateY(-50%);
+      font-size: 40px;
+      font-weight: bold;
+      color: blue;
+      z-index: 1;
+    }
+    #letter-red {
+      position: absolute;
+      top: 50%;
+      right: 50px;
+      transform: translateY(-50%);
+      font-size: 40px;
+      font-weight: bold;
+      color: red;
+      z-index: 1;
+    }
+    #timer {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 20px;
+      z-index: 1;
+    }
+    #confidence {
+      position: fixed;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 20px;
+      text-align: center;
+      display: none;
+      z-index: 2;
+    }
+    #confidence-buttons {
+      text-align: center;
+      margin-top: 10px;
+    }
+    #confidence-buttons button {
+      display: inline-block;
+      margin-bottom: 0 10px;
+      padding: 5px 10px;
+    }
+    #timer-bar-container {
+      width: 100%;
+      height: 10px;
+      background-color: #ccc;
+      margin-top: 10px;
+    }
+    #timer-bar {
+      height: 100%;
+      width: 100%;
+      background-color: #000000;
+      transition: width 1s linear;
+    }
+    #timer-bar-container.hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="intro=page" class="page">
+    <p><i>Welcome! Thank you for choosing to participate in this experiment. Please read all instructions before starting:</i></p>
+    <p>Let's play a game. Take a look at the diagram below. Each shape represents a different concentration of a color.
+      Some are more/less concentrated red while others are more/less concentrated blue.</p>
+    <p>When you click the start button, a series of shapes will appear on your screen. Please follow along with the shapes
+      to figure out whether more red/blue is shown. Click on the left arrow key if you think that there's more red. Click
+      on the right arrow key if you think there's more blue.</p>
+    <p>Once you press an arrow key, you will be asked how confident you feel in your decision (how "correct" do you think
+      you were?). Click one of the buttons that appear on the screen to indicate whether you feel completely certain that
+      your answer was a complete guess (1) or if you believe with utmost certainty that you were right (5).</p>
+    </p><b>CAUTION<b><br>You have limited time to complete the task, so be careful! Sometimes, you might see how much time
+      you have left. Other times, you might not...<p>
+    <p>Click the start button to play!</p>
+    <button id="start-button">Start!</button>
+  </div>
+  <div id="letter-blue">B</div>
+  <div id="letter-red">R</div>
+  <canvas id="canvas" width="500" height="500"></canvas>
+  <div id="overlay"></div>
+  <div id="timer"></div>
+  <div id="timer-bar-container">
+    <div id="timer-bar"></div>
+  </div>
+  <div id="confidence" style="display: none;">
+    How confident do you feel<br>(1 = a guess, 5 = 100% sure you're right)?<br>
+    <div id="confidence-buttons">
+      <button>1</button>
+      <button>2</button>
+      <button>3</button>
+      <button>4</button>
+      <button>5</button>
+    </div>
+  </div>
+  <div id="oh-no-page" class="page">
+      Oh dear, you ran out of time! Press the button below to move on to the next trial :(<br>
+      <button id="continue-button">Continue</button>
+  </div>
+  <div id="success-page" class="page">
+      Good job! Are you ready for the next trial?<br>
+      <button id="next-trial-button">Next Trial</button>
+  </div>
+  <div id="max-shapes-page" class="page">
+      Oops, you didn't answer for a long time. You must have not been paying attention. That's okay. Just hit the Continue button when ready.<br>
+      <button id="continue-button">Continue</button>
+  </div>
+</body>
+</html>
+
+<script>
+
+  // Wrap JavaScript code inside a DOMContentLoaded event listener
+  document.addEventListener("DOMContentLoaded", function() {
+
+
+// BEGIN VARIABLE DECLARATIONS
+
+
+    // Set up the canvas and declare the ctx variable
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d"); // Define the ctx variable
+
+    // Declare timer-related variables
+    let updateTimerId;
+    let passedTime = 0; // Initialize passedTime
+    let isPaused = false; // Flag to indicate if the timer is paused
+    let arrowKeyPressed = false; // Flag to indicate if an arrow key was pressed
+    let isOutOfTime = false; // Flag to track if time is out    [CF: not sure why there are 3 timer flags]
+    let isTimerAtZero = false; // Initialize the flag as false  [CF: not sure why there are 3 timer flags]
+    let countdownMilliseconds; // Countdown duration in milliseconds
+    let remainingMilliseconds; // Remaining milliseconds on the countdown
+
+    // Get references to the buttons
+    const confidenceButtons = document.querySelectorAll('#confidence-buttons button');
+    let selectedConfidence = 0; // Initialize with a default value
+
+    // Define the shapes and their corresponding log likelihood ratios
+    const shapes = [
+      {shape: "hexagon", llr: -0.9},
+      {shape: "circle", llr: -0.7},
+      {shape: "square", llr: -0.5},
+      {shape: "triangle", llr: -0.3},
+      {shape: "rectangle", llr: 0.3},
+      {shape: "semicircle", llr: 0.5},
+      {shape: "heart", llr: 0.7},
+      {shape: "star", llr: 0.9}
+    ];
+
+    // Initialized other variables
+    let shapeCounter = 0; // Counter variable for the number of shapes drawn
+    const shapeDelay = 400; // Delay between showing shapes in ms
+    const maxShapes = 20; // Max number of shapes (20)
+    const tMin = 2000; // Min duration of timer (deadline)
+    const tMax = 5000; // Max duration of timer (deadline)
+//    let currentShapeTimeoutId; // Timeout ID for controlling shape drawing
+    let startTime; // Start time of shape drawing
+
+
+// BEGIN EVENT LISTENERS (not including the DOMContentLoaded listener which houses all the code)
+
+
+    // Add event listener for arrow key presses
+    window.addEventListener("keydown", function(event) {
+      if ((event.code === "ArrowLeft" || event.code === "ArrowRight") && (isTimerAtZero == false)) {
+        // Pause the timer and shape drawing
+        isPaused = true;
+
+        const arrowPressed = event.code === "ArrowLeft" ? 0 : 1;
+        console.log(`Arrow ${arrowPressed} key pressed`); // Log the event
+
+        // Hide the timer bar container
+        document.getElementById("timer-bar-container").classList.add("hidden");
+
+        // Show the confidence page without resetting the timer
+        showConfidencePage();
+
+        // Check if the continueButton element exists before adding the event listener
+        const continueButton = document.getElementById("continue-button");
+        if (continueButton) {
+          continueButton.addEventListener("click", continueToNextTrial);
+        }
+      }
+    });
+
+    // Attach event listeners to the buttons (capture the clicked button's value)
+    confidenceButtons.forEach((button, index) => {
+      button.addEventListener('click', () => {
+        selectedConfidence = index + 1; // Store the selected confidence value
+        submitConfidence(selectedConfidence); // Call the submitConfidence function
+      });
+    });
+
+
+// BEGIN HELPER FUNCTIONS
+
+
+    // Function to update the timer and check if time is up
+    function updateTimer() {
+      if (!isPaused) {
+        let currentTime = new Date().getTime();
+        let remainingMilliseconds = countdownMilliseconds - passedTime;
+
+        // Display the remaining time in milliseconds
+    //    console.log(`Time remaining: ${remainingMilliseconds} milliseconds`);
+
+        // Stop the countdown at zero
+        if (remainingMilliseconds <= 0) {
+          console.log('Time is up!');
+          // Stop updating the timer display
+          clearInterval(updateTimerId);
+          // Mark that time is out
+          isOutOfTime = true;
+          // Display the "Oh dear" page if no arrow key was pressed
+          if (!arrowKeyPressed) {
+            outOfTimeMessage();
+          }
+        }
+      }
+    }
+
+  // Function to stop drawing shapes and show confidence message
+  function stopDrawing() {
+    document.getElementById("letter-blue").style.display = "none"; // Hide blue letter
+    document.getElementById("letter-red").style.display = "none"; // Hide red letter
+    document.getElementById("canvas").style.display = "none"; // Hide canvas
+    document.getElementById("timer").style.display = "none"; // Hide timer
+
+    // shouldn't this be doing something else?
+
+  }
+ 
+
+// BEGIN MAIN FUNCTIONS
+
+
+    // Wrap the main code inside a function that handles the repeating pattern
+    function run() {
+      // Draw a shape
+      drawShape();
+    }
+
+    // Function to update the timer display and timer bar
+    function updateTimerDisplay() {
+      const timerBar = document.getElementById("timer-bar");
+      const currentTime = Date.now();
+      passedTime = currentTime - startTime;
+      let remainingMilliseconds = countdownMilliseconds - passedTime;
+      remainingMilliseconds = Math.max(remainingMilliseconds, 0);
+
+      const filledPercentage = Math.max(((countdownMilliseconds - passedTime) / countdownMilliseconds) * 100, 0);
+      timerBar.style.width = `${filledPercentage}%`;
+      console.log("filledPercentage:", filledPercentage);
+
+      const remainingSeconds = Math.ceil(remainingMilliseconds / 1000);
+      document.getElementById("timer").textContent = remainingSeconds;
+
+      if (remainingMilliseconds <= 0) {
+        timerBar.style.width = "0%";
+        console.log('Time is up!');
+        clearInterval(updateTimerId);
+        outOfTimeMessage();
+        stopDrawing();
+      } else {
+
+        // Show the timer bar container when the timer is above 0
+        document.getElementById("timer-bar-container").classList.remove("hidden");
+
+        // Hide the "Oh dear" and "Success" pages if the timer is not at 0
+        if (!isTimerAtZero) {
+          const ohNoPage = document.getElementById("oh-no-page");
+          if (ohNoPage) {
+            ohNoPage.style.display = "none";
+          }
+          const successPage = document.getElementById("success-page");
+          if (successPage) {
+            successPage.style.display = "none";
+          }
+        }
+      }
+    }
+
+    // Define the function to draw a shape at the center of the canvas
+    function drawShape() {
+
+      // Check if the confidence page is being displayed
+      if (document.getElementById("confidence").style.display === "block") {
+        return; // Do not continue drawing shapes if on confidence page
+      }
+
+      // Clear the canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Generate a random shape index
+      const randomShapeIndex = Math.floor(Math.random() * shapes.length);
+
+      // Update the timer display
+      updateTimerDisplay();
+
+      // Get the current shape and its log likelihood ratio
+      const currentShape = shapes[randomShapeIndex];
+      const currentShapeLLR = currentShape.llr;
+
+      // Calculate the concentration value based on the LLR
+      const concentration = Math.abs(currentShapeLLR) * 75;
+
+      // Calculate the color based on the concentration value and LLR sign
+      let color;
+
+      if (currentShapeLLR < 0) {
+        color = `rgba(0, 0, 255, ${concentration / 100})`; // Blue color
+      } else {
+        color = `rgba(255, 0, 0, ${concentration / 100})`; // Red color
+      }
+
+      // Draw the current shape at the center of the canvas
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      const size = 100;
+
+      ctx.beginPath();
+
+      switch (currentShape.shape) {
+        case "hexagon":
+          ctx.moveTo(centerX + size/2 * Math.cos(0), centerY + size/2 * Math.sin(0));
+          for (let i = 1; i <= 6; i++) {
+            ctx.lineTo(centerX + size/2 * Math.cos(i * 2 * Math.PI / 6), centerY + size/2 * Math.sin(i * 2 * Math.PI / 6));
+          }
+          break;
+
+        case "circle":
+          ctx.arc(centerX, centerY, size / 2, 0, 2 * Math.PI);
+          break;
+
+        case "square":
+          ctx.rect(centerX - size / 2, centerY - size / 2, size, size);
+          break;
+
+        case "triangle":
+          ctx.moveTo(centerX, centerY - size / 2);
+          ctx.lineTo(centerX + size / 2, centerY + size / 2);
+          ctx.lineTo(centerX - size / 2, centerY + size / 2);
+          ctx.closePath();
+          break;
+
+        case "rectangle":
+          ctx.rect(centerX - size/1.5, centerY - size / 3, 2 * size/1.5, size/1.5);
+          break;
+
+        case "semicircle":
+          ctx.arc(centerX, centerY, size / 2, 0, Math.PI, true);
+          break;
+
+        case "heart":
+          ctx.moveTo(centerX, centerY + size / 4);
+          ctx.bezierCurveTo(centerX - size / 2, centerY - size / 2, centerX - size, centerY - size / 4, centerX, centerY + size / 2);
+          ctx.bezierCurveTo(centerX + size, centerY - size / 4, centerX + size / 2, centerY - size / 2, centerX, centerY + size / 4);
+          break;
+
+        case "star":
+          const innerRadius = size / 4;
+          const outerRadius = size/2;
+          const spikes = 5;
+          const rotation = Math.PI / 2;
+
+          ctx.moveTo(centerX + outerRadius * Math.cos(rotation), centerY + outerRadius * Math.sin(rotation));
+
+          for (let i = 0; i < spikes; i++) {
+            const outerX = centerX + outerRadius * Math.cos(rotation + (i * 2 * Math.PI / spikes));
+            const outerY = centerY + outerRadius * Math.sin(rotation + (i * 2 * Math.PI / spikes));
+            ctx.lineTo(outerX, outerY);
+
+            const innerX = centerX + innerRadius * Math.cos(rotation + ((i + 0.5) * 2 * Math.PI / spikes));
+            const innerY = centerY + innerRadius * Math.sin(rotation + ((i + 0.5) * 2 * Math.PI / spikes));
+            ctx.lineTo(innerX, innerY);
+          }
+          break;
+      }
+
+      ctx.closePath();
+      ctx.fillStyle = color;
+      ctx.fill();
+
+      // Output the value of the current shape to the console
+      console.log("Current shape value:", currentShapeLLR);
+
+      // Increment the shape counter
+      shapeCounter++;
+
+      // Check if the maximum number of shapes has been reached
+      if (shapeCounter >= maxShapes) {
+        // All shapes have been drawn, make the entire screen blank
+        document.getElementById("overlay").style.display = "block";
+        document.getElementById("confidence").style.display = "block";
+
+        // Display new message (not out of time, just weren't paying attention?)
+        // and the start next trial button
+        maxShapesMessage()
+
+      } else {
+        if (!isPaused) {
+          // Schedule the next shape to be drawn after the delay and pause
+          setTimeout(() => {
+            // Clear the canvas before displaying the next shape
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Schedule the next shape to be drawn after the standard delay and pause
+            setTimeout(drawShape, shapeDelay + 100); // shapeDelay + 100 ms pause
+          }, 400); // 400 ms delay before the first shape
+
+        }
+     }
+
+    }
+
+
+    // Function to start the shapes/timer sequence
+    function startShapesTimer() {
+      // Reset canvas and other elements
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      document.getElementById("overlay").style.display = "none";
+      document.getElementById("confidence").style.display = "none";
+      document.getElementById("letter-blue").style.display = "block";
+      document.getElementById("letter-red").style.display = "block";
+      document.getElementById("timer").style.display = "block";
+
+      // Randomize the countdown duration between tMin and tMax milliseconds
+      countdownMilliseconds = Math.floor(Math.random() * (tMax - tMin + 1)) + tMin;
+      // Calculate the remaining milliseconds on the countdown
+      remainingMilliseconds = countdownMilliseconds - (Date.now() - startTime);
+
+      // Start drawing shapes
+      shapeCounter = 0;
+      document.body.style.backgroundColor = "transparent"; // Reset background color
+
+    }
+
+    // Function to hide the intro page and start the trial
+    function startTrial() {
+<<<<<<< HEAD
+      const introPage = document.getElementById("intro-page");
+=======
+      const introPage = document.getElementById("intro=page");
+>>>>>>> main
+      if (introPage) {
+        introPage.style.display = "none";
+      }
+
+      // Start the trial here
+      startShapesTimer();
+      run();
+    }
+
+    // Add event listener to the "Start" button
+    const startButton = document.getElementById("start-button");
+    if (startButton) {
+      startButton.addEventListener("click", startTrial);
+      startShapesTimer();
+      run();
+    }
+
+    // Function to handle arrow key presses and show the confidence page
+    function showConfidencePage() {
+      if (!isPaused) {
+        isPaused = true; // Pause the timer
+      }
+
+      // Hide all the elements on the screen
+      document.getElementById("letter-blue").style.display = "none";
+      document.getElementById("letter-red").style.display = "none";
+      document.getElementById("canvas").style.display = "none";
+      document.getElementById("overlay").style.display = "none";
+      document.getElementById("timer").style.display = "none";
+
+      // Check if the timer has not reached 0 before showing the confidence page
+      if (remainingMilliseconds > 0) {
+        document.getElementById("confidence").style.display = "block"; // Display the confidence page
+      } else {
+        outOfTimeMessage(); // Display the "Oh dear" message
+      }
+
+      // And just in case Oh No message is there, hide it
+      const ohNoPage = document.getElementById("oh-no-page").style.display = "none";
+
+    }
+
+    // Function to submit confidence and show success page
+    function submitConfidence(confidence) {
+
+      // Hide all the elements on the screen
+      document.getElementById("letter-blue").style.display = "none";
+      document.getElementById("letter-red").style.display = "none";
+      document.getElementById("canvas").style.display = "none";
+      document.getElementById("overlay").style.display = "none";
+      document.getElementById("timer").style.display = "none";
+      document.getElementById("confidence").style.display = "none";
+
+      // Log the selected confidence value to the console
+      console.log("Selected confidence:", confidence);
+
+      // Display the success page with "Good job" message and next trial button
+      const successPage = document.getElementById("success-page");
+      successPage.style.display = "block";
+
+      const nextTrialButton = document.getElementById("next-trial-button");
+      nextTrialButton.addEventListener("click", continueToNextTrial);
+
+    }
+
+    // Function to handle the "Oh dear" message when the timer reaches 0
+    function outOfTimeMessage() {
+        // Hide elements and stop drawing
+        stopDrawing();
+        isPaused = true;
+
+        // Set the flag to indicate that the timer is at 0
+        isTimerAtZero = true;
+
+        // display the Oh No message
+        const ohNoPage = document.getElementById("oh-no-page");
+        ohNoPage.style.display = "block";
+
+        // hide the time bar and Confidence page
+        document.getElementById("timer-bar").style.display = "none";;
+        document.getElementById("confidence").style.display = "none";
+
+        // Check if the "Continue" button exists before adding the event listener
+        const continueButton = document.getElementById("continue-button");
+        if (continueButton) {
+          continueButton.addEventListener("click", continueToNextTrial);
+        }
+    }
+
+    // Function to handle the "Oh dear" message when the timer reaches 0
+    function maxShapesMessage() {
+        // Hide elements and stop drawing
+        stopDrawing();
+        isPaused = true;
+
+        // display the Max Shapes message
+        const maxShapesPage = document.getElementById("max-shapes-page");
+        maxShapesPage.style.display = "block";
+
+        // hide the timer bar, Confidence page, and oh no page
+        document.getElementById("timer-bar").style.display = "none";;
+        document.getElementById("confidence").style.display = "none";
+        document.getElementById("oh-no-page").style.display = "none";
+
+
+        // Check if the "Continue" button exists before adding the event listener
+        const continueButton = document.getElementById("continue-button");
+        if (continueButton) {
+          continueButton.addEventListener("click", continueToNextTrial);
+        }
+    }
+
+    // Function to continue to the next trial from 'Oh dear' page (after time expires)
+    function continueToNextTrial() {
+      // Remove the "Oh dear" page
+      const ohNoPage = document.getElementById("oh-no-page");
+      if (ohNoPage) {
+        ohNoPage.style.display = "none";
+      }
+
+      // Reset variables and restart the shapes/timer sequence
+      shapeCounter = 0;
+      passedTime = 0;
+      isPaused = false;
+      arrowKeyPressed = false;
+      isOutOfTime = false;
+      isTimerAtZero = false;
+
+      // Reset the start time!
+      startTime = Date.now();
+
+      // Restart the shapes/timer sequence for the next trial
+      startShapesTimer();
+
+      // Update timer display (number and bar, if visible)
+//      const timerElement = document.getElementById("timer");
+//      timerElement.textContent = Math.ceil(remainingMilliseconds / 1000);
+      updateTimerDisplay();
+
+      // Call the updateTimer function now and every N ms
+      updateTimerId = setInterval(updateTimer, 10);
+
+      // Run it!
+      run();
+
+    }
+
+
+// BEGIN EXECUTION CODE
+
+    // Hide the "Oh dear" and "Success" pages
+    const ohNoPage = document.getElementById("oh-no-page");
+    if (ohNoPage) {
+      ohNoPage.style.display = "none";
+    }
+    const successPage = document.getElementById("success-page");
+    if (successPage) {
+      successPage.style.display = "none";
+    }
+    const maxShapesPage = document.getElementById("max-shapes-page");
+    if (maxShapesPage) {
+      maxShapesPage.style.display = "none";
+    }
+    const introPage = document.getElementById("intro=page");
+    if (introPage) {
+      introPage.style.display = "none";
+    }
+
+
+    // Record the start time
+    startTime = Date.now();
+
+    // Start timer
+//    startShapesTimer();  //we don't need this here if it's called in startTrial
+
+    // Update timer display (number and bar, if visible)
+//    const timerElement = document.getElementById("timer");
+//    timerElement.textContent = Math.ceil(remainingMilliseconds / 1000);
+//    updateTimerDisplay();
+
+    // Call the updateTimer function now and every N ms
+//    updateTimerId = setInterval(updateTimer, 10);
+
+//    run();
+
+
+  // Close the DOMContentLoaded event listener
+  });
+
+</script>
