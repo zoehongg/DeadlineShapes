@@ -133,6 +133,8 @@
   </div>
   <div id="all-done-page" class="page">
       Congratulations! You've finished one group of trials. Be proud of yourself :)<br>
+      <br>Please click done to submit your results. Thanks!
+      <button id="done-button">Done</button>
   </div>
 </body>
 </html>
@@ -163,7 +165,8 @@
     let selectedConfidence;
 
     // Set the number of trials
-    const maxTrials = 50
+    const practiceTrials = 10;
+    const maxTrials = 4;
 
     // Define the shapes and their corresponding log likelihood ratios
     const shapes = [
@@ -243,7 +246,7 @@
 
   // Function to stop drawing shapes
   function stopDrawing() {
-    console.log("current function: stopDrawing");
+//    console.log("current function: stopDrawing");
     document.getElementById("letter-blue").style.display = "none"; // Hide blue letter
     document.getElementById("letter-red").style.display = "none"; // Hide red letter
     document.getElementById("canvas").style.display = "none"; // Hide canvas
@@ -267,7 +270,9 @@
 
     // Run a trial
     function run() {
-      console.log("current function: run");
+//      console.log("current function: run");
+      console.log("trial number:",trialNumber);
+
       isPaused = false;
 
       // Show the canvas, timer, and R/B
@@ -287,7 +292,7 @@
 
     // Function to draw shapes at the center of the canvas
     function drawShape() {
-      console.log("current function: drawShape");
+//      console.log("current function: drawShape");
 
       // Check if the confidence page is being displayed
       if (document.getElementById("confidence").style.display === "block") {
@@ -469,7 +474,7 @@
 
     // Randomly select which color is correct, and the deadline for this trial
     function setShapesTimer() {
-      console.log("current function: setShapesTimer");
+//      console.log("current function: setShapesTimer");
 
       const correctChoice = sample(choiceProbs);
       console.log("correctChoice",correctChoice);
@@ -480,14 +485,13 @@
       remainingMilliseconds = countdownMilliseconds - (Date.now() - startTime);
 
       // Start drawing shapes
-//      shapeCounter = 0;
       document.body.style.backgroundColor = "transparent"; // Reset background color
 
     }
 
     // Function to hide the intro page and start the trial, when start button is pressed
     function startTrial() {
-      console.log("current function: startTrial");
+  //    console.log("current function: startTrial");
 
       // Hide the intro page
       document.getElementById("intro-page").style.display = "none";
@@ -500,7 +504,7 @@
 
     // Function to handle arrow key presses and show the confidence page
     function showConfidencePage() {
-      console.log("current function: showConfidencePage");
+//      console.log("current function: showConfidencePage");
 
       isOnConfPage = true;
 
@@ -520,7 +524,7 @@
 
     // Function to handle the "Oh dear" message when the timer reaches 0
     function outOfTimeMessage() {
-        console.log("current function: outOfTimeMessage");
+//        console.log("current function: outOfTimeMessage");
         // Hide elements and stop drawing
         stopDrawing();
         isPaused = true;
@@ -544,7 +548,7 @@
 
     // Function to handle the "Oh dear" message when the timer reaches 0
     function maxShapesMessage() {
-        console.log("current function: maxShapesMessage");
+//        console.log("current function: maxShapesMessage");
         // Hide elements and stop drawing
         stopDrawing();
         isPaused = true;
@@ -567,7 +571,7 @@
 
     // Function to continue to the next trial
     function continueToNextTrial() {
-      console.log("current function: continueToNextTrial");
+//      console.log("current function: continueToNextTrial");
 
       // Check if the number of completed trials is less than 40
       if (trialNumber < maxTrials) {
@@ -598,13 +602,21 @@
 
         // Run it!
         run();
-      } else {
-        // once 40 trials have been completed, show the message in the console and browser
-        console.log("Maximum number of trials (40) reached!")
+        } else {
+
+        // once maxTrials have been completed, hide the success page and show the done page
+        console.log("Max Trials reached!")
+        document.getElementById("success-page").style.display = "none";
         document.getElementById("all-done-page").style.display = "block";
+
+        // Add event listener to the "Done" button
+        document.getElementById("done-button").addEventListener("click", submit);
+        }
+
+
       }
 
-    }
+
 
 // BEGIN EXECUTION CODE
 
