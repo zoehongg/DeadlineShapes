@@ -218,7 +218,7 @@
       if (["Digit1", "Digit2", "Digit3", "Digit4", "Digit5"].includes(event.code) && (isOnConfPage == true)) {
 
         const numberPressed = event.code.slice(-1); // Extract the number from the event code
-        console.log(`Number ${numberPressed} key pressed`); // Log the event
+        console.log(`Confidence rating = ${numberPressed}`); // Log the event
         selectedConfidence = numberPressed;
 
         // Hide the confidence page
@@ -305,11 +305,7 @@
         currentShape = shapes[sample(samplingDistribution_red)];
       }
 
-      // Generate a random shape index
-//      const randomShapeIndex = Math.floor(Math.random() * shapes.length);
-
       // Get the current shape and its log likelihood ratio
-//      const currentShape = shapes[randomShapeIndex];
       const currentShapeLLR = currentShape.llr;
 
       // Calculate the concentration value based on the LLR
@@ -460,15 +456,6 @@
             // Otherwise stop updating and wait for conf rating keypress
           }
 
-        // Show the timer bar container when the timer is above 0
-        // document.getElementById("timer-bar-container").classList.remove("hidden"); // what is the 'container?'
-
-        // // Hide the "Oh dear" and "Success" pages if the timer is not at 0
-        // if (!isTimerAtZero) {
-        //   document.getElementById("oh-no-page").style.display = "none";
-        //   document.getElementById("success-page").style.display = "none";
-        // }
-
       }
     }
 
@@ -523,7 +510,6 @@
       document.getElementById("confidence").style.display = "block";
 
     }
-
 
     // Function to handle the "Oh dear" message when the timer reaches 0
     function outOfTimeMessage() {
@@ -594,6 +580,8 @@
       isOnConfPage = false;
       isTimerAtZero = false;
 
+
+
       // Restart the shapes/timer sequence for the next trial
       setShapesTimer();
 
@@ -601,7 +589,6 @@
       run();
 
     }
-
 
 // BEGIN EXECUTION CODE
 
