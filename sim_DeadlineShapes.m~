@@ -50,9 +50,7 @@ figure;plot(1:maxShapes,u,'g-');
 
 % trialwise independent vars
 corrTarg = nan(ntrials,1);
-
-deadline = 99999 ; % randomly assign deadline vs not (even though our expt does it in blocks)
-
+deadline = rand() ; % randomly assign deadline vs not (even though our expt does it in blocks)
 % ntrials-by-nshapes vars
 shape = nan(ntrials,maxShapes);
 DV_red = nan(ntrials,maxShapes);
@@ -70,14 +68,7 @@ distFromBound = nan(ntrials,1);
 
 for n = 1:ntrials % index of trial number
     
-    % HYPOTHESIZED EFFECTS OF DEADLINE
-    if deadline(n) == 1
-        bound = B * 0.7; % bound, or
-        urg = u * 1.5; % urgency (or both)
-    else % no change
-        bound = B;
-        urg = u;
-    end
+    
     
     corrTarg(n) = sample(choiceProbs) - 1; % 0 = blue (neg), 1 = red (pos)
     for s = 1:maxShapes
@@ -88,21 +79,21 @@ for n = 1:ntrials % index of trial number
         end        
         % increment the DVs
         if s==1
-            DV_blue(n,s) = -weights(shape(n,s)) + randn*sigma + urg(s);
-            DV_red(n,s)  =  weights(shape(n,s)) + randn*sigma + urg(s);
+            DV_blue(n,s) = -weights(shape(n,s)) + randn*sigma + u(s);
+            DV_red(n,s)  =  weights(shape(n,s)) + randn*sigma + u(s);
         else
-            DV_blue(n,s) = DV_blue(n,s-1) - weights(shape(n,s)) + randn*sigma + urg(s);
-            DV_red(n,s)  = DV_red(n,s-1)  + weights(shape(n,s)) + randn*sigma + urg(s);
+            DV_blue(n,s) = DV_blue(n,s-1) - weights(shape(n,s)) + randn*sigma + u(s);
+            DV_red(n,s)  = DV_red(n,s-1)  + weights(shape(n,s)) + randn*sigma + u(s);
         end
     end
 
 % % temp: sanity check (don't run it in a loop! only in debug mode or with n=1)
 %     figure(23); clf; plot(1:maxShapes,DV_blue(n,:),'b-',1:maxShapes,DV_red(n,:),'r-');
-%     ylim([-bound*1.2 bound*1.2]);
+%     ylim([-B*1.2 B*1.2]);
 
     % decision outcome
-    cRTblue = find(DV_blue(n,:)>=bound, 1); % time of first bound crossing(s):
-    cRTred = find(DV_red(n,:)>=bound, 1);
+    cRTblue = find(DV_blue(n,:)>=B, 1); % time of first bound crossing(s):
+    cRTred = find(DV_red(n,:)>=B, 1);
     
     % the possibilities are:
     % (1) only the 'blue' accumulator hits bound,
@@ -148,7 +139,7 @@ for n = 1:ntrials % index of trial number
 
     % conf is on a scale of 1-5, inversely related to evidence
     % supporting unchosen option, measured as distance from its bound
-    distFromBound(n) = bound-losingDVval(n);
+    distFromBound(n) = B-losingDVval(n);
     distQuant = [1.3059 1.7640 2.1835 2.7562 inf];
     conf(n) = find(distFromBound(n)<distQuant,1,'first');
 
