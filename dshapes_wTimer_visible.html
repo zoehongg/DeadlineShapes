@@ -133,8 +133,8 @@
   </div>
   <div id="all-done-page" class="page">
       Congratulations! You've finished one group of trials. Be proud of yourself :)<br>
-      <br>Please click done to submit your results. Thanks!
-      <button id="done-button">Done</button>
+      <br>Please click Submit to submit your results. Thanks!
+        <!-- MTurk adds the submit button -->
   </div>
 </body>
 </html>
@@ -609,8 +609,8 @@
         document.getElementById("success-page").style.display = "none";
         document.getElementById("all-done-page").style.display = "block";
 
-        // Add event listener to the "Done" button
-        document.getElementById("done-button").addEventListener("click", submit);
+        $('#submitButton').show(); //assumes MTurk will add object submitButton
+
         }
 
 
