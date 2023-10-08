@@ -1,4 +1,5 @@
-<!DOCTYPE html>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+
 <html>
 <head>
   <link rel="stylesheet" type="text/css" href="styles.css"> <!-- Linking the CSS file here -->
@@ -74,35 +75,46 @@
 </head>
 <body>
   <div id="intro-page" class="page">
-      <p><i>Welcome! Thank you for choosing to participate in this experiment. Please read all instructions before starting:</i></p>
+      <p><i>Welcome! This is an experiment about decision making under time presssure. Please read all instructions before starting:</i></p>
 
-      <p>Let's play a game. When you click Start you will see a random sequence of shapes, each a different shade of red or blue.
-      Your goal is to figure out whether the current sequence contains more 'redness' or more 'blueness' on average,
-      and answer as quickly and accurately as possible using the keyboard. Press the Right arrow key if you think there's more Red,
-      or the Left arrow key if you think there's more Blue. A correct answer yields 1 point, incorrect is 0 points.</p>
+      <p>When you click Start you will see a random sequence of shapes, each a different shade of red or blue.
+      Your goal is to figure out whether the current sequence tends toward 'redness' or 'blueness' on average.
+      Please answer as quickly and accurately as possible using the keyboard.
+      Press the Right arrow key for Red, or the Left arrow key for Blue.</p>
 
-      <p>For example, when the correct answer is "red", a given shape is more likely to be red, but <i>only slightly</i> more likely.
-      Darker (more saturated) colors should be treated as stronger evidence for that color, versus lighter (less saturated) ones.
-      So the best strategy is to wait until you have gathered enough evidence to make a good guess, NOT to guess quickly according
-      to the first couple shapes.</p>
+      <p>There is always a correct answer, determined before the trial begins. But there is a lot of randomness
+      in the sequence, such that a reddish shape can often be seen if even if the correct answer is 'blue'.
+      So the best strategy is to wait until you feel you have gathered enough evidence to make a good guess,
+      NOT to guess quickly according to the first 1 or 2 shapes.</p>
 
-      <p>But don't wait too long! You have limited time to complete each trial, and if you run out, you get zero points for that trial.
+      <p>But don't wait too long! You have limited time to complete each trial, and if you run out, you don't get to answer.
       This 'deadline' occurs at a random time between 5 and 10 seconds, as indicated by the countdown and shrinking timer bar.</p>
 
-      Lastly, once you press an arrow key you will be asked how confident you feel in your decision. Press a number between 1 and 5
-      to indicate whether you feel your answer was:
+      <p>Lastly, once you press an arrow key you will be asked how confident you feel in your decision.
+      Press a number between 1 and 5 to indicate whether you feel your answer was:
       <br>(1) A complete guess (50/50 chance of being correct, or worse)
       <br>(2) Fairly uncertain (60% chance of being correct)
       <br>(3) Pretty good guess (70% chance of being correct)
       <br>(4) Fairly confident (80% chance of being correct)
       <br>(5) Very confident (>90% chance of being correct)
+      </p>
 
       <p>After you submit your confidence rating, a new trial will begin, with a new random sequence and random correct answer.
-      You can complete as few or as many trials as you like, up to a maximum of 40.</p>
+      You must complete 40 trials for the data to be valid. When done, the Submit button will appear.</p>
 
-      <p>Okay ready? Click the start button to begin!</p>
-    <button id="start-button">Start!</button>
+      <p>Let's try a few practice trials first. Ready?</p>
+
+    <button id="start-practice-button">Start practice!</button>
   </div>
+
+  <div id="end-practice-page" class="page">
+      <p>Okay great. Ready to start the real experiment?</p>
+    <button id="start-button">Start experiment!</button>
+
+      <p>Or, if you want more practice:</p>
+    <button id="start-practice-button2">More practice</button>
+  </div>
+
   <div id="letter-blue">B</div>
   <div id="letter-red">R</div>
   <canvas id="canvas" width="500" height="500"></canvas>
@@ -113,11 +125,11 @@
   </div>
   <div id="confidence" style="display: none;">
     How confident do you feel?  Press a number key 1-5:
-    <br>(1) A complete guess (50% chance of being correct, or worse)
-    <br>(2) Fairly uncertain (60% chance of being correct)
-    <br>(3) Pretty good guess (70% chance of being correct)
-    <br>(4) Fairly confident (80% chance of being correct)
-    <br>(5) Very confident (>90% chance of being correct)
+    <br>(1) Complete guess (50%)
+    <br>(2) Fairly uncertain (60%)
+    <br>(3) Pretty good guess (70%)
+    <br>(4) Fairly confident (80%)
+    <br>(5) Very confident (>90%)
   </div>
   <div id="oh-no-page" class="page">
       Oh dear, you ran out of time! Click the button below to move on to the next trial :(<br>
@@ -132,10 +144,30 @@
       <button id="continue-button">Continue</button>
   </div>
   <div id="all-done-page" class="page">
-      Congratulations! You've finished one group of trials. Be proud of yourself :)<br>
-      <br>Please click Submit to submit your results. Thanks!
+      <br>Congratulations! Please click Submit to submit your results. Thanks!
+      <br>
         <!-- MTurk adds the submit button -->
   </div>
+
+<!-- This is the mechanism required by MTurk -->
+<crowd-form answer-format="flatten-objects">
+
+  <!-- <div id="trial1" class="trialDiv">
+      <crowd-input type="hidden" name="startTime1" value="-1" id="startTime1"></crowd-input>
+      <crowd-input type="hidden" name="corChoice1" value="-1" id="corChoice1"></crowd-input>
+      <crowd-input type="hidden" name="totalLLR1" value="-1" id="totalLLR1"></crowd-input>
+      <crowd-input type="hidden" name="nShapes1" value="-1" id="nShapes1"></crowd-input>
+      <crowd-input type="hidden" name="deadline1" value="-1" id="deadline1"></crowd-input>
+      <crowd-input type="hidden" name="choice1" value="-1" id="choice1"></crowd-input>
+      <crowd-input type="hidden" name="RT1" value="-1" id="RT1"></crowd-input>
+      <crowd-input type="hidden" name="conf1" value="-1" id="conf1"></crowd-input>
+  </div> -->
+  <!-- this would have to be repeated nTrials times! -->
+  <!-- instead, use this container and dynamically generate the <div> blocks in the execution code below -->
+  <div id="trial-container"></div>
+
+</crowd-form>
+
 </body>
 </html>
 
@@ -159,14 +191,10 @@
     let countdownMilliseconds; // Countdown duration in milliseconds
     let remainingMilliseconds; // Remaining milliseconds on the countdown
 
-    // Declare trialwise dependent variables
-    let choice;
-    let reactionTime;
-    let selectedConfidence;
-
     // Set the number of trials
-    const practiceTrials = 10;
-    const maxTrials = 4;
+    const practiceTrials = 1;
+    const maxTrials = 1;
+    let currentMaxTrials; // dummy var for whether counting practice or regular trials
 
     // Define the shapes and their corresponding log likelihood ratios
     const shapes = [
@@ -181,7 +209,9 @@
     ];
 
     // Initialize other variables
+    let isPractice = true; // Flag for whether trials are practice (do not save data)
     let shapeCounter = 0; // Counter variable for the number of shapes drawn
+    let totalLLR = 0; // Tallies the total LLR for shapes shown on a given trial
     const shapeDelay = 300; // Delay between showing shapes in ms
     const maxShapes = 20; // Max number of shapes (20)
     const tMin = 2000; // Min duration of timer (deadline)
@@ -204,12 +234,20 @@
 
         const currentTime = Date.now();
         const passedTime = currentTime - startTime;
-        reactionTime = passedTime;
-        console.log("RT:",reactionTime);
+        console.log("RT:",passedTime);
+
+        // assign the 'input' variable for the current trial (e.g. RT1) as the current RT
 
         const arrowPressed = event.code === "ArrowLeft" ? 0 : 1;
         console.log(`Arrow ${arrowPressed} key pressed`); // Log the event
-        choice = arrowPressed;
+
+        // Save variables
+        if (!isPractice) {
+          $('#nShapes' + trialNumber).val(shapeCounter);
+          $('#totalLLR' + trialNumber).val(totalLLR);
+          $('#choice' + trialNumber).val(arrowPressed);
+          $('#RT' + trialNumber).val(passedTime);
+        }
 
         // Hide the timer bar container
         document.getElementById("timer-bar-container").classList.add("hidden");
@@ -225,24 +263,43 @@
 
     // Add event listener for number key presses when on confidence page
     window.addEventListener("keydown", function(event) {
-      if (["Digit1", "Digit2", "Digit3", "Digit4", "Digit5"].includes(event.code) && (isOnConfPage == true)) {
+      if (["Digit1", "Digit2", "Digit3", "Digit4", "Digit5","Numpad1", "Numpad2", "Numpad3", "Numpad4", "Numpad5"].includes(event.code) && (isOnConfPage == true)) {
 
         const numberPressed = event.code.slice(-1); // Extract the number from the event code
         console.log(`Confidence rating = ${numberPressed}`); // Log the event
-        selectedConfidence = numberPressed;
+
+        if (!isPractice) {
+          $('#conf' + trialNumber).val(numberPressed);
+        }
 
         // Hide the confidence page
         document.getElementById("confidence").style.display = "none";
 
         // Display the success page with "Good job" message and next trial button
         document.getElementById("success-page").style.display = "block";
-        document.getElementById("next-trial-button").addEventListener("click", continueToNextTrial);
+        document.getElementById("next-trial-button").addEventListener("click", function() {
+          continueToNextTrial(isPractice); // this anonymous wrapper is necessary to call the function with an argument
+        });
 
       }
     });
 
 
 // BEGIN HELPER FUNCTIONS
+
+  // function for formatting multiple hidden input variables in
+  function createHiddenInputs(trNum, inputNames) {
+    const inputElements = [];
+    inputNames.forEach((name) => {
+      const crowdInput = document.createElement('crowd-input');
+      crowdInput.type = 'hidden';
+      crowdInput.name = `${name}${trialNumber}`;
+      crowdInput.value = '-1';
+      crowdInput.id = `${name}${trialNumber}`;
+      inputElements.push(crowdInput);
+    });
+    return inputElements;
+  }
 
   // Function to stop drawing shapes
   function stopDrawing() {
@@ -251,7 +308,6 @@
     document.getElementById("letter-red").style.display = "none"; // Hide red letter
     document.getElementById("canvas").style.display = "none"; // Hide canvas
     document.getElementById("timer").style.display = "none"; // Hide timer
-
   }
 
   function sample(distribution) {
@@ -269,11 +325,14 @@
 // BEGIN MAIN FUNCTIONS
 
     // Run a trial
-    function run() {
+    function run(isPractice) {
 //      console.log("current function: run");
       console.log("trial number:",trialNumber);
 
       isPaused = false;
+
+      // Reset background color
+      document.body.style.backgroundColor = "transparent";
 
       // Show the canvas, timer, and R/B
       document.getElementById("canvas").style.display = "block";
@@ -285,13 +344,17 @@
 
       // Set the start time
       startTime = Date.now();
+      if (!isPractice) {
+        $('#startTime' + trialNumber).val(startTime);
+      }
 
       // Start the shape sequence
-      drawShape();
+      drawShape(isPractice);
     }
 
+
     // Function to draw shapes at the center of the canvas
-    function drawShape() {
+    function drawShape(isPractice) {
 //      console.log("current function: drawShape");
 
       // Check if the confidence page is being displayed
@@ -304,7 +367,6 @@
 
       // Update the timer display
       requestAnimationFrame(updateTimerDisplay);
-
 
       setTimeout(function() {
       }, 300); // delay before the first shape
@@ -401,7 +463,10 @@
       ctx.fill();
 
       // Output the value of the current shape to the console
-      console.log("Current shape value:", currentShapeLLR);
+      // console.log("Current shape value:", currentShapeLLR);
+
+      // Increment the total LLR for this trial
+      totalLLR = totalLLR + currentShapeLLR;
 
       // Increment the shape counter
       shapeCounter++;
@@ -412,9 +477,15 @@
         document.getElementById("overlay").style.display = "block";
         document.getElementById("confidence").style.display = "block";
 
+        // save some variables before aborting the trial
+        if (!isPractice) {
+          $('#nShapes' + trialNumber).val(shapeCounter);
+          $('#totalLLR' + trialNumber).val(totalLLR);
+        }
+
         // Display new message (not out of time, just weren't paying attention?)
         // and the start next trial button
-        maxShapesMessage()
+        maxShapesMessage(isPractice)
 
       } else {
         if (!isPaused) {
@@ -424,7 +495,10 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             // Schedule the next shape to be drawn after the standard delay and pause
-            setTimeout(drawShape, shapeDelay + 80); // shapeDelay + gap
+            setTimeout(function() {
+              drawShape(isPractice);
+            }, shapeDelay + 80);
+
           }, shapeDelay); //
 
         }
@@ -454,10 +528,9 @@
       if (remainingMilliseconds <= 0) {
 
         // Animation is complete, you can perform any necessary actions here
-        console.log('Animation complete');
         timerBar.style.width = "0%";
         console.log('Time is up!');
-        outOfTimeMessage();
+        outOfTimeMessage(isPractice);
 
       } else {
 
@@ -473,34 +546,66 @@
 
 
     // Randomly select which color is correct, and the deadline for this trial
-    function setShapesTimer() {
+    function setShapesTimer(isPractice) {
 //      console.log("current function: setShapesTimer");
 
       const correctChoice = sample(choiceProbs);
-      console.log("correctChoice",correctChoice);
+      // console.log("correctChoice",correctChoice);
 
       // Randomize the countdown duration between tMin and tMax milliseconds
       countdownMilliseconds = Math.floor(Math.random() * (tMax - tMin + 1)) + tMin;
+
       // Calculate the remaining milliseconds on the countdown
       remainingMilliseconds = countdownMilliseconds - (Date.now() - startTime);
 
-      // Start drawing shapes
-      document.body.style.backgroundColor = "transparent"; // Reset background color
+      // Save some trial data variables
+      if (!isPractice) {
+        $('#corChoice' + trialNumber).val(correctChoice);
+        $('#deadline' + trialNumber).val(countdownMilliseconds);
+      }
 
     }
 
-    // Function to hide the intro page and start the trial, when start button is pressed
-    function startTrial() {
-  //    console.log("current function: startTrial");
+    // Function to hide the intro page and start practice trials when button is pressed
+    function startPracticeBlock() {
+      // console.log("current function: startPracticeBlock");
 
-      // Hide the intro page
+      isPractice = true;
+
+      // Hide the intro page (and end-practice too in case of multiple practice rounds)
       document.getElementById("intro-page").style.display = "none";
+      document.getElementById("end-practice-page").style.display = "none";
+
+      // For some reason this needs to be redundantly reset
+      document.getElementById("timer-bar").style.width = `${100}%`;
 
       // Start the trial
-      setShapesTimer();
-      run();
+      setShapesTimer(isPractice);
+      run(isPractice);
 
     }
+
+    // Function to hide the end-practice page and start real trials when button is pressed
+    function startBlock() {
+      // console.log("current function: startBlock");
+
+      isPractice = false;
+
+      // Re-initialize trial number
+      trialNumber = 1;
+
+      // Hide the end-practice page
+      document.getElementById("end-practice-page").style.display = "none";
+
+      // For some reason this needs to be redundantly reset
+      document.getElementById("timer-bar").style.width = `${100}%`;
+
+      // Start the trial
+      setShapesTimer(isPractice);
+      run(isPractice);
+
+    }
+
 
     // Function to handle arrow key presses and show the confidence page
     function showConfidencePage() {
@@ -523,7 +628,7 @@
     }
 
     // Function to handle the "Oh dear" message when the timer reaches 0
-    function outOfTimeMessage() {
+    function outOfTimeMessage(isPractice) {
 //        console.log("current function: outOfTimeMessage");
         // Hide elements and stop drawing
         stopDrawing();
@@ -539,15 +644,23 @@
         document.getElementById("timer-bar").style.display = "none";;
         document.getElementById("confidence").style.display = "none";
 
-        // Check if the "Continue" button exists before adding the event listener
-        const continueButton = document.getElementById("continue-button");
-        if (continueButton) {
-          continueButton.addEventListener("click", continueToNextTrial);
+        // save the trialwise variables
+        if (!isPractice) {
+          $('#nShapes' + trialNumber).val(shapeCounter);
+          $('#totalLLR' + trialNumber).val(totalLLR);
+          $('#choice' + trialNumber).val(-1);
+          $('#RT' + trialNumber).val(-1);
+          $('#conf' + trialNumber).val(-1);
         }
+
+        document.getElementById("continue-button").addEventListener("click", function() {
+          continueToNextTrial(isPractice); // this anonymous wrapper is necessary to call the function with an argument
+        });
+
     }
 
     // Function to handle the "Oh dear" message when the timer reaches 0
-    function maxShapesMessage() {
+    function maxShapesMessage(isPractice) {
 //        console.log("current function: maxShapesMessage");
         // Hide elements and stop drawing
         stopDrawing();
@@ -562,23 +675,27 @@
         document.getElementById("confidence").style.display = "none";
         document.getElementById("oh-no-page").style.display = "none";
 
-        // Check if the "Continue" button exists before adding the event listener
-        const continueButton = document.getElementById("continue-button");
-        if (continueButton) {
-          continueButton.addEventListener("click", continueToNextTrial);
-        }
+        document.getElementById("continue-button").addEventListener("click", function() {
+          continueToNextTrial(isPractice); // this anonymous wrapper is necessary to call the function with an argument
+        });
+
     }
 
     // Function to continue to the next trial
-    function continueToNextTrial() {
+    function continueToNextTrial(isPractice) {
 //      console.log("current function: continueToNextTrial");
 
-      // Check if the number of completed trials is less than 40
-      if (trialNumber < maxTrials) {
-        // Completed trial counter!
+      if (isPractice) {
+        currentMaxTrials = practiceTrials;
+      } else {
+        currentMaxTrials = maxTrials;
+      }
+
+      if (trialNumber < currentMaxTrials) {
+        // increment trial counter
         trialNumber++;
 
-        // hide the various pages we don't want to see
+        // Hide the various pages we don't want to see
         document.getElementById("oh-no-page").style.display = "none";
         document.getElementById("max-shapes-page").style.display = "none";
         document.getElementById("all-done-page").style.display = "none";
@@ -592,35 +709,63 @@
 
         // Reset variables and restart the shapes/timer sequence
         shapeCounter = 0;
+        totalLLR = 0;
         passedTime = 0;
         isPaused = false;
         isOnConfPage = false;
         isTimerAtZero = false;
 
         // Restart the shapes/timer sequence for the next trial
-        setShapesTimer();
+        setShapesTimer(isPractice);
 
         // Run it!
-        run();
+        run(isPractice);
+
         } else {
+          if (isPractice) {
+            // once practiceTrials have been completed, hide the unwanted pages and show the end practice page
+            console.log("Practice trials finished")
+            document.getElementById("success-page").style.display = "none";
+            document.getElementById("oh-no-page").style.display = "none";
+            document.getElementById("max-shapes-page").style.display = "none";
+            document.getElementById("end-practice-page").style.display = "block";
 
-        // once maxTrials have been completed, hide the success page and show the done page
-        console.log("Max Trials reached!")
-        document.getElementById("success-page").style.display = "none";
-        document.getElementById("all-done-page").style.display = "block";
+            // Add event listeners to both "Start" buttons, and wait
+            document.getElementById("start-button").addEventListener("click", startBlock);
+            document.getElementById("start-practice-button2").addEventListener("click", startPracticeBlock);
 
-        $('#submitButton').show(); //assumes MTurk will add object submitButton
+          } else {
+            // once practiceTrials have been completed, hide the unwanted pages and show the end practice page
+            console.log("Max Trials reached!")
+            document.getElementById("success-page").style.display = "none";
+            document.getElementById("oh-no-page").style.display = "none";
+            document.getElementById("max-shapes-page").style.display = "none";
+            document.getElementById("all-done-page").style.display = "block";
+            $('#submitButton').show(); //MTurk will add the object submitButton
+          }
 
         }
 
-
       }
-
-
 
 // BEGIN EXECUTION CODE
 
+    // Generate the nTrials <div> blocks for crowd-input
+    const inputNames = ['startTime', 'corChoice', 'totalLLR', 'nShapes', 'deadline', 'choice', 'RT', 'conf']; // Add more variable names as needed
+    for (let trNum = 1; trNum <= maxTrials; trNum++) {
+      const trialDiv = document.createElement('div');
+      trialDiv.className = 'trialDiv';
+
+      const inputElements = createHiddenInputs(trNum, inputNames);
+      inputElements.forEach((input) => {
+        trialDiv.appendChild(input);
+      });
+
+      document.getElementById('trial-container').appendChild(trialDiv);
+    }
+
     // Hide the various messages/pages we don't want to be visible yet
+    document.getElementById("end-practice-page").style.display = "none";
     document.getElementById("oh-no-page").style.display = "none";;
     document.getElementById("success-page").style.display = "none";
     document.getElementById("max-shapes-page").style.display = "none";
@@ -635,11 +780,8 @@
     // Show the welcome page
     document.getElementById("intro-page").style.display = "block";
 
-    // Add event listener to the "Start" button, and wait
-    const startButton = document.getElementById("start-button");
-    if (startButton) {
-      startButton.addEventListener("click", startTrial);
-    }
+    // Add event listener to the "Start practice" button, and wait
+    document.getElementById("start-practice-button").addEventListener("click", startPracticeBlock);
 
   // Close the DOMContentLoaded event listener
   });
