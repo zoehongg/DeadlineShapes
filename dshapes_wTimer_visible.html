@@ -1,4 +1,4 @@
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <html>
 <head>
@@ -82,10 +82,10 @@
       Please answer as quickly and accurately as possible using the keyboard.
       Press the Right arrow key for Red, or the Left arrow key for Blue.</p>
 
-      <p>There is always a correct answer, determined before the trial begins. But there is a lot of randomness
-      in the sequence, such that a reddish shape can often be seen if even if the correct answer is 'blue'.
-      So the best strategy is to wait until you feel you have gathered enough evidence to make a good guess,
-      NOT to guess quickly according to the first 1 or 2 shapes.</p>
+      <p>There is always a correct answer for each trial, determined by a coin flip before the trial begins.
+      But there is a lot of randomness in the sequence, so a reddish shape can occur even if the correct answer is 'blue'.
+      The best strategy is to wait until you feel you have gathered enough evidence to make a good guess,
+      rather than guessing quickly according to the first 1 or 2 shapes.</p>
 
       <p>But don't wait too long! You have limited time to complete each trial, and if you run out, you don't get to answer.
       This 'deadline' occurs at a random time between 5 and 10 seconds, as indicated by the countdown and shrinking timer bar.</p>
@@ -96,11 +96,12 @@
       <br>(2) Fairly uncertain (60% chance of being correct)
       <br>(3) Pretty good guess (70% chance of being correct)
       <br>(4) Fairly confident (80% chance of being correct)
-      <br>(5) Very confident (>90% chance of being correct)
-      </p>
+      <br>(5) Very confident (>90% chance of being correct)</p>
+
+      <p><b>By confidence we mean the likelihood of being correct, so if you are confident you got it *wrong*, press 1.</b></p>
 
       <p>After you submit your confidence rating, a new trial will begin, with a new random sequence and random correct answer.
-      You must complete 40 trials for the data to be valid. When done, the Submit button will appear.</p>
+      You must attempt 40 trials for the data to be valid. When done, the Submit button will appear.</p>
 
       <p>Let's try a few practice trials first. Ready?</p>
 
@@ -124,12 +125,15 @@
     <div id="timer-bar"></div>
   </div>
   <div id="confidence" style="display: none;">
-    How confident do you feel?  Press a number key 1-5:
+    <br>How confident are you that your answer was correct?
+    <br>Press a number key 1-5:
+    <p>
     <br>(1) Complete guess (50%)
     <br>(2) Fairly uncertain (60%)
     <br>(3) Pretty good guess (70%)
     <br>(4) Fairly confident (80%)
     <br>(5) Very confident (>90%)
+    </p>
   </div>
   <div id="oh-no-page" class="page">
       Oh dear, you ran out of time! Click the button below to move on to the next trial :(<br>
@@ -144,7 +148,7 @@
       <button id="continue-button">Continue</button>
   </div>
   <div id="all-done-page" class="page">
-      <br>Congratulations! Please click Submit to submit your results. Thanks!
+      <br>Congratulations! All done for this set. Please click Submit to submit your results. Thanks!
       <br>
         <!-- MTurk adds the submit button -->
   </div>
@@ -252,6 +256,9 @@
         // Hide the timer bar container
         document.getElementById("timer-bar-container").classList.add("hidden");
 
+        // Hide submit button until maxTrials are completed
+        $('#submitButton').hide();
+
         stopDrawing();
 
         // Show the confidence page without resetting the timer [why not reset timer!?]
@@ -274,6 +281,8 @@
 
         // Hide the confidence page
         document.getElementById("confidence").style.display = "none";
+
+        $('#submitButton').hide(); // Hide submit button until maxTrials are completed
 
         // Display the success page with "Good job" message and next trial button
         document.getElementById("success-page").style.display = "block";
@@ -576,6 +585,9 @@
       document.getElementById("intro-page").style.display = "none";
       document.getElementById("end-practice-page").style.display = "none";
 
+      // Hide submit button until maxTrials are completed
+      $('#submitButton').hide();
+
       // For some reason this needs to be redundantly reset
       document.getElementById("timer-bar").style.width = `${100}%`;
 
@@ -596,6 +608,9 @@
 
       // Hide the end-practice page
       document.getElementById("end-practice-page").style.display = "none";
+
+      // Hide submit button until maxTrials are completed
+      $('#submitButton').hide();
 
       // For some reason this needs to be redundantly reset
       document.getElementById("timer-bar").style.width = `${100}%`;
@@ -644,6 +659,9 @@
         document.getElementById("timer-bar").style.display = "none";;
         document.getElementById("confidence").style.display = "none";
 
+        // Hide submit button until maxTrials are completed
+        $('#submitButton').hide();
+
         // save the trialwise variables
         if (!isPractice) {
           $('#nShapes' + trialNumber).val(shapeCounter);
@@ -675,6 +693,9 @@
         document.getElementById("confidence").style.display = "none";
         document.getElementById("oh-no-page").style.display = "none";
 
+        // Hide submit button until maxTrials are completed
+        $('#submitButton').hide();
+
         document.getElementById("continue-button").addEventListener("click", function() {
           continueToNextTrial(isPractice); // this anonymous wrapper is necessary to call the function with an argument
         });
@@ -701,6 +722,9 @@
         document.getElementById("all-done-page").style.display = "none";
         document.getElementById("confidence").style.display = "none";
         document.getElementById("success-page").style.display = "none";
+
+        // Hide submit button until maxTrials are completed
+        $('#submitButton').hide();
 
         // Reset canvas and other elements
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -741,7 +765,9 @@
             document.getElementById("oh-no-page").style.display = "none";
             document.getElementById("max-shapes-page").style.display = "none";
             document.getElementById("all-done-page").style.display = "block";
-            $('#submitButton').show(); //MTurk will add the object submitButton
+
+            $('#submitButton').show(); //MTurk will create the object submitButton
+
           }
 
         }
@@ -749,6 +775,8 @@
       }
 
 // BEGIN EXECUTION CODE
+
+    $('#submitButton').hide(); // Hide submit button until maxTrials are completed
 
     // Generate the nTrials <div> blocks for crowd-input
     const inputNames = ['startTime', 'corChoice', 'totalLLR', 'nShapes', 'deadline', 'choice', 'RT', 'conf']; // Add more variable names as needed
