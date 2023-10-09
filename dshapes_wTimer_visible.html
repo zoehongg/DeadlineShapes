@@ -77,9 +77,9 @@
   <div id="intro-page" class="page">
       <p><i>Welcome! This is an experiment about decision making under time presssure. Please read all instructions before starting:</i></p>
 
-      <p>When you click Start you will see a random sequence of shapes, each a different shade of red or blue.
-      Your goal is to figure out whether the current sequence tends toward 'redness' or 'blueness' on average.
-      Please answer as quickly and accurately as possible using the keyboard.
+      <p>When you click Start you will see a rapid sequence of shapes, each a random shade of red or blue.</p>
+      <p>Your goal is to figure out whether the current sequence tends toward 'redness' or 'blueness' on average.</p>
+      Please answer as quickly and accurately as possible using the keyboard:
       Press the Right arrow key for Red, or the Left arrow key for Blue.</p>
 
       <p>There is always a correct answer for each trial, determined by a coin flip before the trial begins.
@@ -87,21 +87,21 @@
       The best strategy is to wait until you feel you have gathered enough evidence to make a good guess,
       rather than guessing quickly according to the first 1 or 2 shapes.</p>
 
-      <p>But don't wait too long! You have limited time to complete each trial, and if you run out, you don't get to answer.
-      This 'deadline' occurs at a random time between 5 and 10 seconds, as indicated by the countdown and shrinking timer bar.</p>
+      <p>But don't wait too long! You have limited time to complete each trial, and if you run out, you don't get to answer.</p>
+      <p>This 'deadline' occurs at a random time between 5 and 10 seconds, as indicated by the countdown and shrinking timer bar.</p>
 
       <p>Lastly, once you press an arrow key you will be asked how confident you feel in your decision.
-      Press a number between 1 and 5 to indicate whether you feel your answer was:
-      <br>(1) A complete guess (50/50 chance of being correct, or worse)
-      <br>(2) Fairly uncertain (60% chance of being correct)
-      <br>(3) Pretty good guess (70% chance of being correct)
-      <br>(4) Fairly confident (80% chance of being correct)
-      <br>(5) Very confident (>90% chance of being correct)</p>
+      Press a number between 1 and 5 to indicate whether you feel your answer was:</p>
+      (1) A complete guess (50/50 chance of being correct, or worse)<br>
+      (2) Fairly uncertain (60% chance of being correct)<br>
+      (3) Pretty good guess (70% chance of being correct)<br>
+      (4) Fairly confident (80% chance of being correct)<br>
+      (5) Very confident (>90% chance of being correct)</p>
 
-      <p><b>By confidence we mean the likelihood of being correct, so if you are confident you got it *wrong*, press 1.</b></p>
+      <p>By "confidence" we mean the likelihood of being correct, so if you are confident you got it <b><i>wrong</i></b>, press 1.</p>
 
-      <p>After you submit your confidence rating, a new trial will begin, with a new random sequence and random correct answer.
-      You must attempt 40 trials for the data to be valid. When done, the Submit button will appear.</p>
+      <p>After you submit your confidence rating, a new trial will begin, with a new random sequence and random correct answer.</p>
+      <p>You must attempt 40 trials for the data to be valid. When done, the Submit button will appear.</p>
 
       <p>Let's try a few practice trials first. Ready?</p>
 
@@ -141,7 +141,7 @@
   </div>
   <div id="success-page" class="page">
       Good job! Click the button when ready for the next trial.<br>
-      <button id="next-trial-button">Next Trial</button>
+      <button id="continue-button">Continue</button>
   </div>
   <div id="max-shapes-page" class="page">
       Oops, you didn't answer for a long time. You must have not been paying attention. That's okay. Just click Continue when ready.<br>
@@ -155,19 +155,7 @@
 
 <!-- This is the mechanism required by MTurk -->
 <crowd-form answer-format="flatten-objects">
-
-  <!-- <div id="trial1" class="trialDiv">
-      <crowd-input type="hidden" name="startTime1" value="-1" id="startTime1"></crowd-input>
-      <crowd-input type="hidden" name="corChoice1" value="-1" id="corChoice1"></crowd-input>
-      <crowd-input type="hidden" name="totalLLR1" value="-1" id="totalLLR1"></crowd-input>
-      <crowd-input type="hidden" name="nShapes1" value="-1" id="nShapes1"></crowd-input>
-      <crowd-input type="hidden" name="deadline1" value="-1" id="deadline1"></crowd-input>
-      <crowd-input type="hidden" name="choice1" value="-1" id="choice1"></crowd-input>
-      <crowd-input type="hidden" name="RT1" value="-1" id="RT1"></crowd-input>
-      <crowd-input type="hidden" name="conf1" value="-1" id="conf1"></crowd-input>
-  </div> -->
-  <!-- this would have to be repeated nTrials times! -->
-  <!-- instead, use this container and dynamically generate the <div> blocks in the execution code below -->
+  <!-- javascript will dynamically generate the <div> blocks, to be stored in this container -->
   <div id="trial-container"></div>
 
 </crowd-form>
@@ -194,10 +182,11 @@
     let isTimerAtZero = false; // Initialize the flag as false
     let countdownMilliseconds; // Countdown duration in milliseconds
     let remainingMilliseconds; // Remaining milliseconds on the countdown
+    let previousTimeoutId; // Variable to store the ID of the previous timeout
 
     // Set the number of trials
-    const practiceTrials = 1;
-    const maxTrials = 1;
+    const practiceTrials = 5;
+    const maxTrials = 5;
     let currentMaxTrials; // dummy var for whether counting practice or regular trials
 
     // Define the shapes and their corresponding log likelihood ratios
@@ -213,6 +202,7 @@
     ];
 
     // Initialize other variables
+    let correctChoice; // whether Blue or Red is correct on a given trial
     let isPractice = true; // Flag for whether trials are practice (do not save data)
     let shapeCounter = 0; // Counter variable for the number of shapes drawn
     let totalLLR = 0; // Tallies the total LLR for shapes shown on a given trial
@@ -226,6 +216,7 @@
 
     let startTime; // Start time of shape drawing
 
+    let timesCalled = 0; // temp
 
 // BEGIN EVENT LISTENERS (not including the DOMContentLoaded listener which houses all the code)
 
@@ -235,6 +226,7 @@
 
         // Pause the timer and shape drawing
         isPaused = true;
+        clearPreviousTimeout(); // Clear the previous timeout
 
         const currentTime = Date.now();
         const passedTime = currentTime - startTime;
@@ -286,7 +278,7 @@
 
         // Display the success page with "Good job" message and next trial button
         document.getElementById("success-page").style.display = "block";
-        document.getElementById("next-trial-button").addEventListener("click", function() {
+        document.getElementById("continue-button").addEventListener("click", function() {
           continueToNextTrial(isPractice); // this anonymous wrapper is necessary to call the function with an argument
         });
 
@@ -295,6 +287,13 @@
 
 
 // BEGIN HELPER FUNCTIONS
+
+  // Function to clear the previous timeout
+  function clearPreviousTimeout() {
+    if (previousTimeoutId) {
+      clearTimeout(previousTimeoutId);
+    }
+  }
 
   // function for formatting multiple hidden input variables in
   function createHiddenInputs(trNum, inputNames) {
@@ -312,7 +311,7 @@
 
   // Function to stop drawing shapes
   function stopDrawing() {
-//    console.log("current function: stopDrawing");
+    //console.log("current function: stopDrawing");
     document.getElementById("letter-blue").style.display = "none"; // Hide blue letter
     document.getElementById("letter-red").style.display = "none"; // Hide red letter
     document.getElementById("canvas").style.display = "none"; // Hide canvas
@@ -335,13 +334,17 @@
 
     // Run a trial
     function run(isPractice) {
-//      console.log("current function: run");
+      console.log("current function: run");
       console.log("trial number:",trialNumber);
 
       isPaused = false;
 
       // Reset background color
       document.body.style.backgroundColor = "transparent";
+
+      // For some reason this shows up...
+      document.getElementById("end-practice-page").style.display = "none";
+
 
       // Show the canvas, timer, and R/B
       document.getElementById("canvas").style.display = "block";
@@ -364,7 +367,7 @@
 
     // Function to draw shapes at the center of the canvas
     function drawShape(isPractice) {
-//      console.log("current function: drawShape");
+      console.log("current function: drawShape");
 
       // Check if the confidence page is being displayed
       if (document.getElementById("confidence").style.display === "block") {
@@ -380,7 +383,6 @@
       setTimeout(function() {
       }, 300); // delay before the first shape
 
-      const correctChoice = sample(choiceProbs);
       let currentShape
       if (correctChoice==0) {
         currentShape = shapes[sample(samplingDistribution_blue)];
@@ -391,16 +393,16 @@
       // Get the current shape and its log likelihood ratio
       const currentShapeLLR = currentShape.llr;
 
-      // Calculate the concentration value based on the LLR
-      const concentration = Math.abs(currentShapeLLR) * 75;
+      // Calculate the saturation value based on the LLR
+      const saturation = Math.abs(currentShapeLLR) * 75;
 
-      // Calculate the color based on the concentration value and LLR sign
+      // Calculate the color based on the saturation value and LLR sign
       let color;
 
       if (currentShapeLLR < 0) {
-        color = `rgba(0, 0, 255, ${concentration / 100})`; // Blue color
+        color = `rgba(0, 0, 255, ${saturation / 100})`; // Blue color
       } else {
-        color = `rgba(255, 0, 0, ${concentration / 100})`; // Red color
+        color = `rgba(255, 0, 0, ${saturation / 100})`; // Red color
       }
 
       // Draw the current shape at the center of the canvas
@@ -479,6 +481,7 @@
 
       // Increment the shape counter
       shapeCounter++;
+      console.log("shapeCounter:",shapeCounter);
 
       // Check if the maximum number of shapes has been reached
       if (shapeCounter >= maxShapes) {
@@ -498,17 +501,33 @@
 
       } else {
         if (!isPaused) {
-          // Schedule the next shape to be drawn after the delay and gap
-          setTimeout(() => {
+
+          // // Schedule the next shape to be drawn after the delay and gap
+          // setTimeout(() => {
+          //   // Clear the canvas before displaying the next shape
+          //   ctx.clearRect(0, 0, canvas.width, canvas.height);
+          //
+          //   // Schedule the next shape to be drawn after the standard delay and pause
+          //   setTimeout(function() {
+          //     drawShape(isPractice);
+          //   }, shapeDelay + 80);
+          //
+          // }, shapeDelay); //
+
+
+          // Schedule a timeout with a delay of shapeDelay
+          previousTimeoutId = setTimeout(() => {
             // Clear the canvas before displaying the next shape
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             // Schedule the next shape to be drawn after the standard delay and pause
-            setTimeout(function() {
+            clearPreviousTimeout(); // Clear the previous timeout
+            previousTimeoutId = setTimeout(() => {
               drawShape(isPractice);
             }, shapeDelay + 80);
 
-          }, shapeDelay); //
+          }, shapeDelay);
+
 
         }
      }
@@ -529,9 +548,10 @@
       document.getElementById("timer").textContent = remainingSeconds;
 
       // Update the timer bar width
-      timerBar.style.width = `${filledPercentage-40}%`;
-      // resorted to this kluge '-40' after an hour of attempts to fix the mismatch
-      // between bar appearance and filledPercentage/timerBar.style.width
+      timerBar.style.width = `${filledPercentage-20}%`;
+      // resorted to this kluge after an hour of attempts to fix the mismatch
+      // between bar appearance and filledPercentage/timerBar.style.width.
+      // requires re-tuning of the number depending on tMin & tMax
 
       // Check if the animation is complete
       if (remainingMilliseconds <= 0) {
@@ -556,9 +576,9 @@
 
     // Randomly select which color is correct, and the deadline for this trial
     function setShapesTimer(isPractice) {
-//      console.log("current function: setShapesTimer");
+      console.log("current function: setShapesTimer");
 
-      const correctChoice = sample(choiceProbs);
+      correctChoice = sample(choiceProbs);
       // console.log("correctChoice",correctChoice);
 
       // Randomize the countdown duration between tMin and tMax milliseconds
@@ -577,9 +597,12 @@
 
     // Function to hide the intro page and start practice trials when button is pressed
     function startPracticeBlock() {
-      // console.log("current function: startPracticeBlock");
+      console.log("current function: startPracticeBlock");
 
       isPractice = true;
+
+      // Re-initialize trial number
+      trialNumber = 1;
 
       // Hide the intro page (and end-practice too in case of multiple practice rounds)
       document.getElementById("intro-page").style.display = "none";
@@ -599,7 +622,7 @@
 
     // Function to hide the end-practice page and start real trials when button is pressed
     function startBlock() {
-      // console.log("current function: startBlock");
+      console.log("current function: startBlock");
 
       isPractice = false;
 
@@ -624,7 +647,7 @@
 
     // Function to handle arrow key presses and show the confidence page
     function showConfidencePage() {
-//      console.log("current function: showConfidencePage");
+      console.log("current function: showConfidencePage");
 
       isOnConfPage = true;
 
@@ -644,10 +667,11 @@
 
     // Function to handle the "Oh dear" message when the timer reaches 0
     function outOfTimeMessage(isPractice) {
-//        console.log("current function: outOfTimeMessage");
+        //console.log("current function: outOfTimeMessage");
         // Hide elements and stop drawing
         stopDrawing();
         isPaused = true;
+        clearPreviousTimeout(); // Clear the previous timeout
 
         // Set the flag to indicate that the timer is at 0
         isTimerAtZero = true;
@@ -679,10 +703,11 @@
 
     // Function to handle the "Oh dear" message when the timer reaches 0
     function maxShapesMessage(isPractice) {
-//        console.log("current function: maxShapesMessage");
+        console.log("current function: maxShapesMessage");
         // Hide elements and stop drawing
         stopDrawing();
         isPaused = true;
+        clearPreviousTimeout(); // Clear the previous timeout
 
         // display the Max Shapes message
         const maxShapesPage = document.getElementById("max-shapes-page");
@@ -704,7 +729,40 @@
 
     // Function to continue to the next trial
     function continueToNextTrial(isPractice) {
-//      console.log("current function: continueToNextTrial");
+      console.log("current function: continueToNextTrial");
+
+      timesCalled++;
+      console.log("timesCalled",timesCalled);
+
+      if (timesCalled>2) {
+        debugger;
+      }
+
+      clearPreviousTimeout(); // Clear the previous timeout
+
+      // Hide submit button until maxTrials are completed
+      $('#submitButton').hide();
+
+      // Hide the various pages we don't want to see
+      document.getElementById("oh-no-page").style.display = "none";
+      document.getElementById("max-shapes-page").style.display = "none";
+      document.getElementById("all-done-page").style.display = "none";
+      document.getElementById("confidence").style.display = "none";
+      document.getElementById("success-page").style.display = "none";
+      document.getElementById("end-practice-page").style.display = "none";
+
+      // Reset canvas and other elements
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      document.getElementById("overlay").style.display = "none";
+      document.getElementById("timer-bar").style.width = `${100}%`;
+
+      // Reset variables
+      shapeCounter = 0;
+      totalLLR = 0;
+      passedTime = 0;
+      isPaused = false;
+      isOnConfPage = false;
+      isTimerAtZero = false;
 
       if (isPractice) {
         currentMaxTrials = practiceTrials;
@@ -715,29 +773,6 @@
       if (trialNumber < currentMaxTrials) {
         // increment trial counter
         trialNumber++;
-
-        // Hide the various pages we don't want to see
-        document.getElementById("oh-no-page").style.display = "none";
-        document.getElementById("max-shapes-page").style.display = "none";
-        document.getElementById("all-done-page").style.display = "none";
-        document.getElementById("confidence").style.display = "none";
-        document.getElementById("success-page").style.display = "none";
-
-        // Hide submit button until maxTrials are completed
-        $('#submitButton').hide();
-
-        // Reset canvas and other elements
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        document.getElementById("overlay").style.display = "none";
-        document.getElementById("timer-bar").style.width = `${100}%`;
-
-        // Reset variables and restart the shapes/timer sequence
-        shapeCounter = 0;
-        totalLLR = 0;
-        passedTime = 0;
-        isPaused = false;
-        isOnConfPage = false;
-        isTimerAtZero = false;
 
         // Restart the shapes/timer sequence for the next trial
         setShapesTimer(isPractice);
@@ -759,11 +794,12 @@
             document.getElementById("start-practice-button2").addEventListener("click", startPracticeBlock);
 
           } else {
-            // once practiceTrials have been completed, hide the unwanted pages and show the end practice page
+            // once experiment trials have been completed, hide the unwanted pages and show the Congrats + submit page
             console.log("Max Trials reached!")
             document.getElementById("success-page").style.display = "none";
             document.getElementById("oh-no-page").style.display = "none";
             document.getElementById("max-shapes-page").style.display = "none";
+            document.getElementById("end-practice-page").style.display = "none";
             document.getElementById("all-done-page").style.display = "block";
 
             $('#submitButton').show(); //MTurk will create the object submitButton
