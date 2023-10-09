@@ -5,7 +5,7 @@ close all
 
 
 % basic vars
-ntrials = 10000;
+ntrials = 100000;
 shapes = ['hexagon','circle','square','triangle','rectangle','semicircle','heart','star'];
 weights = [-0.9, -0.7, -0.5, -0.3, 0.3, 0.5, 0.7, 0.9];
 samplingDist_blue = [0.055, 0.11, 0.2, 0.365, 0.18, 0.06, 0.02, 0.01];
@@ -42,7 +42,7 @@ sigma = 0.3; % st.dev of noise added to momentary evidence
 urgencySlope = 0.02;
 u(1:2) = 0;
 u(3:maxShapes) = urgencySlope*(1:maxShapes-2);
-figure;plot(1:maxShapes,u,'g-');
+% figure;plot(1:maxShapes,u,'g-'); title('urgency signal');
 
 
 
@@ -50,17 +50,20 @@ figure;plot(1:maxShapes,u,'g-');
 
 % trialwise independent vars
 corrTarg = nan(ntrials,1);
-
-deadline = 99999 ; % randomly assign deadline vs not (even though our expt does it in blocks)
+    % randomly assign deadline vs not (even though our expt does it in blocks):
+    % use round(rand( to make a vector of random 1's and 0's
+deadline = round(rand(ntrials,1)); 
 
 % ntrials-by-nshapes vars
 shape = nan(ntrials,maxShapes);
 DV_red = nan(ntrials,maxShapes);
 DV_blue = nan(ntrials,maxShapes);
+
 % trialwise dependent vars
 choice = nan(ntrials,1);
 RT = nan(ntrials,1);
 conf = nan(ntrials,1);
+
 % misc others
 losingDVval = nan(ntrials,1);
 hitBound = nan(ntrials,1);
@@ -72,8 +75,8 @@ for n = 1:ntrials % index of trial number
     
     % HYPOTHESIZED EFFECTS OF DEADLINE
     if deadline(n) == 1
-        bound = B * 0.7; % bound, or
-        urg = u * 1.5; % urgency (or both)
+        bound = B * 0.7; % bound...
+        urg = u * 1.5; % or urgency (or both)
     else % no change
         bound = B;
         urg = u;
@@ -161,6 +164,7 @@ pctCorr = sum(correct)/ntrials
 
 %% some plots
 
+% temp: 
 % figure;hist(totalEvidence,100);
 % figure;hist(RT,20);
 % figure;hist(distFromBound,20)
@@ -169,47 +173,75 @@ pctCorr = sum(correct)/ntrials
 % % 'distance from bound'; use this in the loop above after running.
 % distQuant = quantile(distFromBound,4)
 
-%% cumulative evidence vs. choice (Kira Fig 2D) and confidence
+
+%% choice, RT, and confidence as a function of cumulative evidence (quantiles)
+% see Kira et al., Fig 2D
 
 clear chFreq meanRT meanConf
-TEquant = quantile(totalEvidence,28); % e.g. 30 bins
-theseTrials = totalEvidence<TEquant(1);
-chFreq(1) = mean(choice(theseTrials));
-meanRT(1) = mean(RT(theseTrials));
-meanConf(1) = mean(conf(theseTrials));
+TEquant = quantile(totalEvidence,28); % e.g. 28 bins; can try others
+
+% no deadline
+theseTrials = deadline==0 & totalEvidence<TEquant(1);
+chFreq_noD(1) = mean(choice(theseTrials));
+meanRT_noD(1) = mean(RT(theseTrials));
+meanConf_noD(1) = mean(conf(theseTrials));
 for j = 1:length(TEquant)-1
-    theseTrials = totalEvidence>=TEquant(j) & totalEvidence<TEquant(j+1);
-    chFreq(j+1) = mean(choice(theseTrials));
-    meanRT(j+1) = mean(RT(theseTrials));
-    meanConf(j+1) = mean(conf(theseTrials));
+    theseTrials = deadline==0 & totalEvidence>=TEquant(j) & totalEvidence<TEquant(j+1);
+    chFreq_noD(j+1) = mean(choice(theseTrials));
+    meanRT_noD(j+1) = mean(RT(theseTrials));
+    meanConf_noD(j+1) = mean(conf(theseTrials));
 end
-theseTrials = find(totalEvidence>=TEquant(end));
-chFreq(end+1) = mean(choice(theseTrials));
-meanRT(end+1) = mean(RT(theseTrials));
-meanConf(end+1) = mean(conf(theseTrials));
+theseTrials = deadline==0 & totalEvidence>=TEquant(end);
+chFreq_noD(end+1) = mean(choice(theseTrials));
+meanRT_noD(end+1) = mean(RT(theseTrials));
+meanConf_noD(end+1) = mean(conf(theseTrials));
+
+
+% with deadline
+theseTrials = deadline==1 & totalEvidence<TEquant(1);
+chFreq_wD(1) = mean(choice(theseTrials));
+meanRT_wD(1) = mean(RT(theseTrials));
+meanConf_wD(1) = mean(conf(theseTrials));
+for j = 1:length(TEquant)-1
+    theseTrials = deadline==1 & totalEvidence>=TEquant(j) & totalEvidence<TEquant(j+1);
+    chFreq_wD(j+1) = mean(choice(theseTrials));
+    meanRT_wD(j+1) = mean(RT(theseTrials));
+    meanConf_wD(j+1) = mean(conf(theseTrials));
+end
+theseTrials = deadline==1 & totalEvidence>=TEquant(end);
+chFreq_wD(end+1) = mean(choice(theseTrials));
+meanRT_wD(end+1) = mean(RT(theseTrials));
+meanConf_wD(end+1) = mean(conf(theseTrials));
+
 
 
 %%
+
 figure(12); set(gcf,'position',[500   100   400   850]);
 TEaxis = TEquant(1:end-1)+diff(TEquant)/2;
 
 % choice
 subplot(3,1,1);
-plot(TEaxis,chFreq(2:end-1),'o');
-% fit logistic
-X = totalEvidence;
-y = choice;
-[beta, ~, stats] = glmfit(X, y, 'binomial');
-TEinterp = TEaxis(1):0.01:TEaxis(end);
-yVals = glmval(beta,TEinterp,'logit');
-hold on; plot(TEinterp,yVals,'r-');
+plot(TEaxis,chFreq_noD(2:end-1),'bo-'); hold on;
+plot(TEaxis,chFreq_wD(2:end-1),'ro-'); hold on;
+
+% % fit logistic
+% X = totalEvidence;
+% y = choice;
+% [beta, ~, stats] = glmfit(X, y, 'binomial');
+% TEinterp = TEaxis(1):0.01:TEaxis(end);
+% yVals = glmval(beta,TEinterp,'logit');
+% hold on; plot(TEinterp,yVals,'r-');
+
 xlabel('Total Evidence (LLR)');
 ylabel('Proportion ''red'' choices');
+legend('no deadline','with deadline');
 changeAxesFontSize(gca,15,15);
 
 % RT
 subplot(3,1,2);
-plot(TEaxis,meanRT(2:end-1),'ro-');
+plot(TEaxis,meanRT_noD(2:end-1),'bx-'); hold on;
+plot(TEaxis,meanRT_wD(2:end-1),'rx-');
 xlabel('Total Evidence (LLR)');
 ylabel('mean RT (nshapes)');
 % ylim([1 5]);
@@ -217,7 +249,8 @@ changeAxesFontSize(gca,15,15);
 
 % conf
 subplot(3,1,3);
-plot(TEaxis,meanConf(2:end-1),'ro-');
+plot(TEaxis,meanConf_noD(2:end-1),'bs-'); hold on;
+plot(TEaxis,meanConf_wD(2:end-1),'rs-');
 xlabel('Total Evidence (LLR)');
 ylabel('mean confidence rating (1-5)');
 ylim([1 5]);
