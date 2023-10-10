@@ -137,15 +137,15 @@
   </div>
   <div id="oh-no-page" class="page">
       Oh dear, you ran out of time! Click the button below to move on to the next trial :(<br>
-      <button id="continue-button">Continue</button>
+      <p><button id="continue-button">Continue</button></p>
   </div>
   <div id="success-page" class="page">
       Good job! Click the button when ready for the next trial.<br>
-      <button id="next-trial-button">Next Trial</button>
+      <p><button id="next-trial-button">Next Trial</button></p>
   </div>
   <div id="max-shapes-page" class="page">
       Oops, you didn't answer for a long time. You must have not been paying attention. That's okay. Just click Continue when ready.<br>
-      <button id="resume-button">Resume</button>
+      <p><button id="resume-button">Resume</button></p>
   </div>
   <div id="all-done-page" class="page">
       <br>Congratulations! All done for this set. Please click Submit to submit your results. Thanks!
@@ -185,8 +185,8 @@
     let previousTimeoutId; // Variable to store the ID of the previous timeout
 
     // Set the number of trials
-    const practiceTrials = 20;
-    const maxTrials = 20;
+    const practiceTrials = 10;
+    const maxTrials = 40;
     let currentMaxTrials; // dummy var for whether counting practice or regular trials
 
     // Define the shapes and their corresponding log likelihood ratios
@@ -208,15 +208,14 @@
     let totalLLR = 0; // Tallies the total LLR for shapes shown on a given trial
     const shapeDelay = 300; // Delay between showing shapes in ms
     const maxShapes = 20; // Max number of shapes (20)
-    const tMin = 2000; // Min duration of timer (deadline)
-    const tMax = 5000; // Max duration of timer (deadline)
+    const tMin = 3000; // Min duration of timer (deadline)
+    const tMax = 7000; // Max duration of timer (deadline)
     const samplingDistribution_blue = [0.055, 0.11, 0.2, 0.365, 0.18, 0.06, 0.02, 0.01];
     const samplingDistribution_red =  [0.01, 0.02, 0.06, 0.18, 0.365, 0.2, 0.11, 0.055];
     const choiceProbs = [0.5, 0.5];
 
     let startTime; // Start time of shape drawing
 
-    let timesCalled = 0; // temp
 
 // BEGIN EVENT LISTENERS (not including the DOMContentLoaded listener which houses all the code)
 
@@ -278,21 +277,9 @@
         // Display the success page with "Good job" message and next trial button
         document.getElementById("success-page").style.display = "block";
 
-        // Remove any active listeners before adding one, to avoid duplicates
-        nextTrialButton = document.getElementById("next-trial-button")
-        if (nextTrialButton) {
-          nextTrialButton.removeEventListener("click", continueToNextTrial);
-        }
-        continueButton = document.getElementById("continue-button")
-        if (continueButton) {
-          continueButton.removeEventListener("click", continueToNextTrial);
-        }
-        resumeButton = document.getElementById("resume-button")
-        if (resumeButton) {
-          nextTrialButton.removeEventListener("click", continueToNextTrial);
-        }
-
-        document.getElementById("next-trial-button").addEventListener("click", addListenerToButton);
+        // Remove the listener before adding it, to avoid duplicates
+        document.getElementById("next-trial-button").removeEventListener("click", eventListenerFunction);
+        document.getElementById("next-trial-button").addEventListener("click", eventListenerFunction);
 
       }
     });
@@ -302,9 +289,10 @@
 
   // Function to add an event listener to a button, for continueToNextTrial
 
-  function addListenerToButton() {
-    continueToNextTrial(isPractice); // this anonymous wrapper is necessary to call the function with an argument
-  });
+  // Event listener function for "continue" buttons
+  function eventListenerFunction() {
+    continueToNextTrial(isPractice);
+  }
 
   // Function to clear the previous timeout
   function clearPreviousTimeout() {
@@ -352,7 +340,7 @@
 
     // Run a trial
     function run(isPractice) {
-      console.log("current function: run");
+      //console.log("current function: run");
       console.log("trial number:",trialNumber);
 
       isPaused = false;
@@ -385,7 +373,7 @@
 
     // Function to draw shapes at the center of the canvas
     function drawShape(isPractice) {
-      console.log("current function: drawShape");
+      //console.log("current function: drawShape");
 
       // Check if the confidence page is being displayed
       if (document.getElementById("confidence").style.display === "block") {
@@ -576,7 +564,7 @@
 
         // Animation is complete, you can perform any necessary actions here
         timerBar.style.width = "0%";
-        console.log('Time is up!');
+        // console.log('Time is up!');
         outOfTimeMessage(isPractice);
 
       } else {
@@ -594,7 +582,7 @@
 
     // Randomly select which color is correct, and the deadline for this trial
     function setShapesTimer(isPractice) {
-      console.log("current function: setShapesTimer");
+      // console.log("current function: setShapesTimer");
 
       correctChoice = sample(choiceProbs);
       // console.log("correctChoice",correctChoice);
@@ -615,7 +603,7 @@
 
     // Function to hide the intro page and start practice trials when button is pressed
     function startPracticeBlock() {
-      console.log("current function: startPracticeBlock");
+      //console.log("current function: startPracticeBlock");
 
       isPractice = true;
 
@@ -640,7 +628,7 @@
 
     // Function to hide the end-practice page and start real trials when button is pressed
     function startBlock() {
-      console.log("current function: startBlock");
+      //console.log("current function: startBlock");
 
       isPractice = false;
 
@@ -665,7 +653,7 @@
 
     // Function to handle arrow key presses and show the confidence page
     function showConfidencePage() {
-      console.log("current function: showConfidencePage");
+      //console.log("current function: showConfidencePage");
 
       isOnConfPage = true;
 
@@ -713,29 +701,15 @@
           $('#conf' + trialNumber).val(-1);
         }
 
-        // Remove any active listeners before adding one, to avoid duplicates
-        nextTrialButton = document.getElementById("next-trial-button")
-        if (nextTrialButton) {
-          nextTrialButton.removeEventListener("click", continueToNextTrial);
-        }
-        continueButton = document.getElementById("continue-button")
-        if (continueButton) {
-          continueButton.removeEventListener("click", continueToNextTrial);
-        }
-        resumeButton = document.getElementById("resume-button")
-        if (resumeButton) {
-          nextTrialButton.removeEventListener("click", continueToNextTrial);
-        }
-
-        document.getElementById("continue-button").addEventListener("click", function() {
-          continueToNextTrial(isPractice); // this anonymous wrapper is necessary to call the function with an argument
-        });
+        // Remove the listener before adding it, to avoid duplicates
+        document.getElementById("continue-button").removeEventListener("click", eventListenerFunction);
+        document.getElementById("continue-button").addEventListener("click", eventListenerFunction);
 
     }
 
     // Function to handle the "Oh dear" message when the timer reaches 0
     function maxShapesMessage(isPractice) {
-        console.log("current function: maxShapesMessage");
+        //console.log("current function: maxShapesMessage");
         // Hide elements and stop drawing
         stopDrawing();
         isPaused = true;
@@ -752,36 +726,15 @@
         // Hide submit button until maxTrials are completed
         $('#submitButton').hide();
 
-        // Remove any active listeners before adding one, to avoid duplicates
-        nextTrialButton = document.getElementById("next-trial-button")
-        if (nextTrialButton) {
-          nextTrialButton.removeEventListener("click", continueToNextTrial);
-        }
-        continueButton = document.getElementById("continue-button")
-        if (continueButton) {
-          continueButton.removeEventListener("click", continueToNextTrial);
-        }
-        resumeButton = document.getElementById("resume-button")
-        if (resumeButton) {
-          nextTrialButton.removeEventListener("click", continueToNextTrial);
-        }
-
-        document.getElementById("resume-button").addEventListener("click", function() {
-          continueToNextTrial(isPractice); // this anonymous wrapper is necessary to call the function with an argument
-        });
+        // Remove the listener before adding it, to avoid duplicates
+        document.getElementById("resume-button").removeEventListener("click", eventListenerFunction);
+        document.getElementById("resume-button").addEventListener("click", eventListenerFunction);
 
     }
 
     // Function to continue to the next trial
     function continueToNextTrial(isPractice) {
-      console.log("current function: continueToNextTrial");
-
-      timesCalled++;
-      console.log("timesCalled",timesCalled);
-
-      if (timesCalled>10) {
-        debugger;
-      }
+      //console.log("current function: continueToNextTrial");
 
       clearPreviousTimeout(); // Clear the previous timeout
 
