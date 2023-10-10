@@ -141,11 +141,11 @@
   </div>
   <div id="success-page" class="page">
       Good job! Click the button when ready for the next trial.<br>
-      <button id="continue-button">Continue</button>
+      <button id="next-trial-button">Next Trial</button>
   </div>
   <div id="max-shapes-page" class="page">
       Oops, you didn't answer for a long time. You must have not been paying attention. That's okay. Just click Continue when ready.<br>
-      <button id="continue-button">Continue</button>
+      <button id="resume-button">Resume</button>
   </div>
   <div id="all-done-page" class="page">
       <br>Congratulations! All done for this set. Please click Submit to submit your results. Thanks!
@@ -185,8 +185,8 @@
     let previousTimeoutId; // Variable to store the ID of the previous timeout
 
     // Set the number of trials
-    const practiceTrials = 5;
-    const maxTrials = 5;
+    const practiceTrials = 20;
+    const maxTrials = 20;
     let currentMaxTrials; // dummy var for whether counting practice or regular trials
 
     // Define the shapes and their corresponding log likelihood ratios
@@ -259,7 +259,6 @@
       }
     });
 
-
     // Add event listener for number key presses when on confidence page
     window.addEventListener("keydown", function(event) {
       if (["Digit1", "Digit2", "Digit3", "Digit4", "Digit5","Numpad1", "Numpad2", "Numpad3", "Numpad4", "Numpad5"].includes(event.code) && (isOnConfPage == true)) {
@@ -278,15 +277,34 @@
 
         // Display the success page with "Good job" message and next trial button
         document.getElementById("success-page").style.display = "block";
-        document.getElementById("continue-button").addEventListener("click", function() {
-          continueToNextTrial(isPractice); // this anonymous wrapper is necessary to call the function with an argument
-        });
+
+        // Remove any active listeners before adding one, to avoid duplicates
+        nextTrialButton = document.getElementById("next-trial-button")
+        if (nextTrialButton) {
+          nextTrialButton.removeEventListener("click", continueToNextTrial);
+        }
+        continueButton = document.getElementById("continue-button")
+        if (continueButton) {
+          continueButton.removeEventListener("click", continueToNextTrial);
+        }
+        resumeButton = document.getElementById("resume-button")
+        if (resumeButton) {
+          nextTrialButton.removeEventListener("click", continueToNextTrial);
+        }
+
+        document.getElementById("next-trial-button").addEventListener("click", addListenerToButton);
 
       }
     });
 
 
 // BEGIN HELPER FUNCTIONS
+
+  // Function to add an event listener to a button, for continueToNextTrial
+
+  function addListenerToButton() {
+    continueToNextTrial(isPractice); // this anonymous wrapper is necessary to call the function with an argument
+  });
 
   // Function to clear the previous timeout
   function clearPreviousTimeout() {
@@ -695,6 +713,20 @@
           $('#conf' + trialNumber).val(-1);
         }
 
+        // Remove any active listeners before adding one, to avoid duplicates
+        nextTrialButton = document.getElementById("next-trial-button")
+        if (nextTrialButton) {
+          nextTrialButton.removeEventListener("click", continueToNextTrial);
+        }
+        continueButton = document.getElementById("continue-button")
+        if (continueButton) {
+          continueButton.removeEventListener("click", continueToNextTrial);
+        }
+        resumeButton = document.getElementById("resume-button")
+        if (resumeButton) {
+          nextTrialButton.removeEventListener("click", continueToNextTrial);
+        }
+
         document.getElementById("continue-button").addEventListener("click", function() {
           continueToNextTrial(isPractice); // this anonymous wrapper is necessary to call the function with an argument
         });
@@ -710,8 +742,7 @@
         clearPreviousTimeout(); // Clear the previous timeout
 
         // display the Max Shapes message
-        const maxShapesPage = document.getElementById("max-shapes-page");
-        maxShapesPage.style.display = "block";
+        document.getElementById("max-shapes-page").style.display = "block";
 
         // hide the timer bar, Confidence page, and oh no page
         document.getElementById("timer-bar").style.display = "none";;
@@ -721,7 +752,21 @@
         // Hide submit button until maxTrials are completed
         $('#submitButton').hide();
 
-        document.getElementById("continue-button").addEventListener("click", function() {
+        // Remove any active listeners before adding one, to avoid duplicates
+        nextTrialButton = document.getElementById("next-trial-button")
+        if (nextTrialButton) {
+          nextTrialButton.removeEventListener("click", continueToNextTrial);
+        }
+        continueButton = document.getElementById("continue-button")
+        if (continueButton) {
+          continueButton.removeEventListener("click", continueToNextTrial);
+        }
+        resumeButton = document.getElementById("resume-button")
+        if (resumeButton) {
+          nextTrialButton.removeEventListener("click", continueToNextTrial);
+        }
+
+        document.getElementById("resume-button").addEventListener("click", function() {
           continueToNextTrial(isPractice); // this anonymous wrapper is necessary to call the function with an argument
         });
 
@@ -734,7 +779,7 @@
       timesCalled++;
       console.log("timesCalled",timesCalled);
 
-      if (timesCalled>2) {
+      if (timesCalled>10) {
         debugger;
       }
 
