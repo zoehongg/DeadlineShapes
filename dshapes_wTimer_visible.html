@@ -21,7 +21,7 @@
     }
     #letter-blue {
       position: absolute;
-      top: 50%;
+      top: 250px;
       left: 50px;
       transform: translateY(-50%);
       font-size: 40px;
@@ -31,13 +31,26 @@
     }
     #letter-red {
       position: absolute;
-      top: 50%;
+      top: 250px;
       right: 50px;
       transform: translateY(-50%);
       font-size: 40px;
       font-weight: bold;
       color: red;
       z-index: 1;
+    }
+    #correct-answer {
+      position: absolute;
+      top: 15px;
+      right: 10px;
+      font-size: 20px;
+      font-weight: bold;
+    }
+    #trial-counter {
+      position: absolute;
+      top: 15px;
+      left: 10px;
+      font-size: 16px;
     }
     #timer {
       position: absolute;
@@ -77,6 +90,8 @@
   <div id="intro-page" class="page">
       <p><i>Welcome! This is an experiment about decision making under time presssure. Please read all instructions before starting:</i></p>
 
+      <p><b>(recommended browser: Google Chrome)</b></p>
+
       <p>When you click Start you will see a rapid sequence of shapes, each a random shade of red or blue.</p>
       <p>Your goal is to figure out whether the current sequence tends toward 'redness' or 'blueness' on average.</p>
       Please answer as quickly and accurately as possible using the keyboard:
@@ -85,12 +100,13 @@
       <p>There is always a correct answer for each trial, determined by a coin flip before the trial begins.
       But there is a lot of randomness in the sequence, so a reddish shape can occur even if the correct answer is 'blue'.
       The best strategy is to wait until you feel you have gathered enough evidence to make a good guess,
-      rather than guessing quickly according to the first 1 or 2 shapes.</p>
+      rather than guessing quickly according to the first 1 or 2 shapes. Other than practice trials, you will not get
+      feedback on whether your choice was correct or not.</p>
 
-      <p>But don't wait too long! You have limited time to complete each trial, and if you run out, you don't get to answer.</p>
-      <p>This 'deadline' occurs at a random time between 5 and 10 seconds, as indicated by the countdown and shrinking timer bar.</p>
+      <p><b>But don't wait too long! You have limited time to complete each trial, and if you run out, you don't get to answer.</b></p>
+      <p>This 'deadline' occurs at a random time between 3 and 7 seconds, as indicated by the countdown and shrinking timer bar.</p>
 
-      <p>Lastly, once you press an arrow key you will be asked how confident you feel in your decision.
+      <p>Lastly, once you press an arrow key you will be asked to rate your confidence in the decision you just made.
       Press a number between 1 and 5 to indicate whether you feel your answer was:</p>
       (1) A complete guess (50/50 chance of being correct, or worse)<br>
       (2) Fairly uncertain (60% chance of being correct)<br>
@@ -98,10 +114,10 @@
       (4) Fairly confident (80% chance of being correct)<br>
       (5) Very confident (>90% chance of being correct)</p>
 
-      <p>By "confidence" we mean the likelihood of being correct, so if you are confident you got it <b><i>wrong</i></b>, press 1.</p>
+      <p>By "confidence" we mean the likelihood of being correct, e.g. if you are pretty sure you got it <b><i>wrong</i></b>, you'd press 1.</p>
 
       <p>After you submit your confidence rating, a new trial will begin, with a new random sequence and random correct answer.</p>
-      <p>You must attempt 40 trials for the data to be valid. When done, the Submit button will appear.</p>
+      <p>You must attempt 40 trials (not including practice trials) for the data to be valid. When done, the Submit button will appear.</p>
 
       <p>Let's try a few practice trials first. Ready?</p>
 
@@ -115,13 +131,16 @@
       <p>Or, if you want more practice:</p>
     <button id="start-practice-button2">More practice</button>
   </div>
-
-  <div id="letter-blue">B</div>
-  <div id="letter-red">R</div>
-  <canvas id="canvas" width="500" height="500"></canvas>
-  <div id="overlay"></div>
-  <div id="timer"></div>
-  <div id="timer-bar-container">
+    <div id="letter-blue">B</div>
+    <div id="letter-red">R</div>
+    <canvas id="canvas" width="500" height="500"></canvas>
+    <div id="overlay"></div>
+    <div id="trial-counter"></div>
+    <div id="correct-answer">
+      <p id="formattedText"></p>
+    </div>
+    <div id="timer"></div>
+    <div id="timer-bar-container">
     <div id="timer-bar"></div>
   </div>
   <div id="confidence" style="display: none;">
@@ -320,6 +339,8 @@
     //console.log("current function: stopDrawing");
     document.getElementById("letter-blue").style.display = "none"; // Hide blue letter
     document.getElementById("letter-red").style.display = "none"; // Hide red letter
+    document.getElementById("correct-answer").style.display = "none"; // Hide correct answer
+    document.getElementById("trial-counter").style.display = "none"; // Hide trial counter
     document.getElementById("canvas").style.display = "none"; // Hide canvas
     document.getElementById("timer").style.display = "none"; // Hide timer
   }
@@ -351,14 +372,27 @@
       // For some reason this shows up...
       document.getElementById("end-practice-page").style.display = "none";
 
+      // update the visible trial counter
+      let trialNumText
+      if (isPractice) {
+        trialNumText = `Trial number: ${trialNumber} out of ${practiceTrials}`;
+      } else {
+        trialNumText = `Trial number: ${trialNumber} out of ${maxTrials}`;
+      }
+      document.getElementById("trial-counter").textContent = trialNumText;
 
-      // Show the canvas, timer, and R/B
+      // Show the canvas, timer, trial counter, and R/B
       document.getElementById("canvas").style.display = "block";
       document.getElementById("letter-blue").style.display = "block";
       document.getElementById("letter-red").style.display = "block";
+      document.getElementById("trial-counter").style.display = "block";
       document.getElementById("timer").style.display = "block";
       document.getElementById("timer-bar").style.display = "block";
       document.getElementById("timer-bar-container").style.display = "block";
+
+      if (isPractice){
+        document.getElementById("correct-answer").style.display = "block";
+      }
 
       // Set the start time
       startTime = Date.now();
@@ -587,6 +621,17 @@
       correctChoice = sample(choiceProbs);
       // console.log("correctChoice",correctChoice);
 
+      // display correct choice on the screen, shown on practice trials only
+      let corrColor;
+      if (correctChoice==1) {
+        corrColor = 'RED';
+      } else {
+        corrColor = 'BLUE';
+      }
+      const formattedTextElement = document.getElementById("formattedText");
+      formattedTextElement.innerHTML = `Correct answer: <strong>${corrColor}</strong><br>(this is only shown during Practice)`;
+
+
       // Randomize the countdown duration between tMin and tMax milliseconds
       countdownMilliseconds = Math.floor(Math.random() * (tMax - tMin + 1)) + tMin;
 
@@ -660,6 +705,8 @@
       // Hide all the elements on the screen
       document.getElementById("letter-blue").style.display = "none";
       document.getElementById("letter-red").style.display = "none";
+      document.getElementById("correct-answer").style.display = "none";
+      document.getElementById("trial-counter").style.display = "none";
       document.getElementById("canvas").style.display = "none";
       document.getElementById("overlay").style.display = "none";
       document.getElementById("timer").style.display = "none";
@@ -834,6 +881,8 @@
     document.getElementById("all-done-page").style.display = "none";
     document.getElementById("letter-blue").style.display = "none";
     document.getElementById("letter-red").style.display = "none";
+    document.getElementById("correct-answer").style.display = "none";
+    document.getElementById("trial-counter").style.display = "none";
     document.getElementById("timer").style.display = "none";
     document.getElementById("timer-bar").style.display = "none";
     document.getElementById("timer-bar-container").style.display = "none";
