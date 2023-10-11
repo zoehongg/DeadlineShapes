@@ -51,14 +51,6 @@
       left: 10px;
       font-size: 16px;
     }
-    #timer {
-      position: absolute;
-      top: 10px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 20px;
-      z-index: 1;
-    }
     #confidence {
       position: fixed;
       top: 10px;
@@ -68,20 +60,6 @@
       text-align: center;
       display: none;
       z-index: 2;
-    }
-    #timer-bar-container {
-      width: 100%;
-      height: 10px;
-      background-color: #ccc;
-      margin-top: 10px;
-    }
-    #timer-bar {
-      height: 100%;
-      width: 100%;
-      background-color: #000000;
-    }
-    #timer-bar-container.hidden {
-      display: none;
     }
   </style>
 </head>
@@ -102,8 +80,8 @@
       rather than guessing quickly according to the first 1 or 2 shapes. Other than practice trials, you will not get
       feedback on whether your choice was correct or not.</p>
 
-      <p><b>But don't wait too long! You have limited time to complete each trial, and if you run out, you don't get to answer.</b></p>
-      <p>This 'deadline' occurs at a random time between 3 and 7 seconds, as indicated by the countdown and shrinking timer bar.</p>
+      <p>If you wait too long, about 20 shapes, the trial will time out and you don't get to answer.
+      But this should never happen if you are paying attention. The decision should never take that long.</p>
 
       <p>Lastly, once you press an arrow key you will be asked to rate your confidence in the decision you just made.
       Press a number between 1 and 5 to indicate whether you feel your answer was:</p>
@@ -138,9 +116,6 @@
     <div id="correct-answer">
       <p id="formattedText"></p>
     </div>
-    <div id="timer"></div>
-    <div id="timer-bar-container">
-    <div id="timer-bar"></div>
   </div>
   <div id="confidence" style="display: none;">
     <br>How confident are you that your answer was correct?
@@ -152,10 +127,6 @@
     <br>(4) Fairly confident (80%)
     <br>(5) Very confident (>90%)
     </p>
-  </div>
-  <div id="oh-no-page" class="page">
-      Oh dear, you ran out of time! Click the button below to move on to the next trial :(<br>
-      <p><button id="continue-button">Continue</button></p>
   </div>
   <div id="success-page" class="page">
       Good job! Click the button when ready for the next trial.<br>
@@ -192,14 +163,11 @@
     const canvas = document.getElementById("canvas");
     const ctx = canvas.getContext("2d"); // Define the ctx variable
 
-    // Declare timer-related variables
+    // Declare time-related variables
     let passedTime = 0; // Initialize passedTime
     let trialNumber = 1 // Initialize trialNumber
-    let isPaused = true; // Flag to indicate if the timer is paused
+    let isPaused = true; // Flag to indicate if the trial is paused
     let isOnConfPage = false; // Flag to indicate if on confidence rating page
-    let isTimerAtZero = false; // Initialize the flag as false
-    let countdownMilliseconds; // Countdown duration in milliseconds
-    let remainingMilliseconds; // Remaining milliseconds on the countdown
     let previousTimeoutId; // Variable to store the ID of the previous timeout
 
     // Set the number of trials
@@ -226,8 +194,6 @@
     let totalLLR = 0; // Tallies the total LLR for shapes shown on a given trial
     const shapeDelay = 300; // Delay between showing shapes in ms
     const maxShapes = 20; // Max number of shapes (20)
-    const tMin = 3000; // Min duration of timer (deadline)
-    const tMax = 7000; // Max duration of timer (deadline)
     const samplingDistribution_blue = [0.055, 0.11, 0.2, 0.365, 0.18, 0.06, 0.02, 0.01];
     const samplingDistribution_red =  [0.01, 0.02, 0.06, 0.18, 0.365, 0.2, 0.11, 0.055];
     const choiceProbs = [0.5, 0.5];
@@ -239,9 +205,9 @@
 
     // Add event listener for arrow key presses
     window.addEventListener("keydown", function(event) {
-      if ((event.code === "ArrowLeft" || event.code === "ArrowRight") && (isTimerAtZero == false) && (isPaused == false)) {
+      if ((event.code === "ArrowLeft" || event.code === "ArrowRight") && (isPaused == false)) {
 
-        // Pause the timer and shape drawing
+        // Pause the shape drawing
         isPaused = true;
         clearPreviousTimeout(); // Clear the previous timeout
 
@@ -260,15 +226,12 @@
           $('#RT' + trialNumber).val(passedTime);
         }
 
-        // Hide the timer bar container
-        document.getElementById("timer-bar-container").classList.add("hidden");
-
         // Hide submit button until maxTrials are completed
         $('#submitButton').hide();
 
         stopDrawing();
 
-        // Show the confidence page without resetting the timer [why not reset timer!?]
+        // Show the confidence page
         showConfidencePage();
 
       }
@@ -333,13 +296,12 @@
 
   // Function to stop drawing shapes
   function stopDrawing() {
-    //console.log("current function: stopDrawing");
+    console.log("current function: stopDrawing");
     document.getElementById("letter-blue").style.display = "none"; // Hide blue letter
     document.getElementById("letter-red").style.display = "none"; // Hide red letter
     document.getElementById("correct-answer").style.display = "none"; // Hide correct answer
     document.getElementById("trial-counter").style.display = "none"; // Hide trial counter
     document.getElementById("canvas").style.display = "none"; // Hide canvas
-    document.getElementById("timer").style.display = "none"; // Hide timer
   }
 
   function sample(distribution) {
@@ -378,14 +340,11 @@
       }
       document.getElementById("trial-counter").textContent = trialNumText;
 
-      // Show the canvas, timer, trial counter, and R/B
+      // Show the canvas, trial counter, and R/B
       document.getElementById("canvas").style.display = "block";
       document.getElementById("letter-blue").style.display = "block";
       document.getElementById("letter-red").style.display = "block";
       document.getElementById("trial-counter").style.display = "block";
-      document.getElementById("timer").style.display = "block";
-      document.getElementById("timer-bar").style.display = "block";
-      document.getElementById("timer-bar-container").style.display = "block";
 
       if (isPractice){
         document.getElementById("correct-answer").style.display = "block";
@@ -413,9 +372,6 @@
 
       // Clear the canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // Update the timer display
-      requestAnimationFrame(updateTimerDisplay);
 
       setTimeout(function() {
       }, 300); // delay before the first shape
@@ -554,49 +510,9 @@
 
     }
 
-    function updateTimerDisplay() {
-//      console.log("current function: updateTimerDisplay");
-      const timerBar = document.getElementById("timer-bar");
-      const currentTime = Date.now();
-      const passedTime = currentTime - startTime;
-      const filledPercentage = Math.max(((countdownMilliseconds - passedTime) / countdownMilliseconds) * 100, 0);
-
-      // from old ver, this helps create a text countdown (seconds) and prevents it from going negative
-      let remainingMilliseconds = countdownMilliseconds - passedTime;
-      remainingMilliseconds = Math.max(remainingMilliseconds, 0);
-      const remainingSeconds = Math.ceil(remainingMilliseconds / 1000);
-      document.getElementById("timer").textContent = remainingSeconds;
-
-      // Update the timer bar width
-      timerBar.style.width = `${filledPercentage-20}%`;
-      // resorted to this kluge after an hour of attempts to fix the mismatch
-      // between bar appearance and filledPercentage/timerBar.style.width.
-      // requires re-tuning of the number depending on tMin & tMax
-
-      // Check if the animation is complete
-      if (remainingMilliseconds <= 0) {
-
-        // Animation is complete, you can perform any necessary actions here
-        timerBar.style.width = "0%";
-        // console.log('Time is up!');
-        outOfTimeMessage(isPractice);
-
-      } else {
-
-          if (isOnConfPage == false) {
-
-            // Continue the animation by requesting the next frame
-            requestAnimationFrame(updateTimerDisplay);
-            // Otherwise stop updating and wait for conf rating keypress
-          }
-
-      }
-    }
-
-
-    // Randomly select which color is correct, and the deadline for this trial
-    function setShapesTimer(isPractice) {
-      // console.log("current function: setShapesTimer");
+    // Set up the trial: select a corr targ, save some data etc
+    function initTrial(isPractice) {
+      // console.log("current function: initTrial");
 
       correctChoice = sample(choiceProbs);
       // console.log("correctChoice",correctChoice);
@@ -611,17 +527,9 @@
       const formattedTextElement = document.getElementById("formattedText");
       formattedTextElement.innerHTML = `Correct answer: <strong>${corrColor}</strong><br>(this is only shown during Practice)`;
 
-
-      // Randomize the countdown duration between tMin and tMax milliseconds
-      countdownMilliseconds = Math.floor(Math.random() * (tMax - tMin + 1)) + tMin;
-
-      // Calculate the remaining milliseconds on the countdown
-      remainingMilliseconds = countdownMilliseconds - (Date.now() - startTime);
-
       // Save some trial data variables
       if (!isPractice) {
         $('#corChoice' + trialNumber).val(correctChoice);
-        $('#deadline' + trialNumber).val(countdownMilliseconds);
       }
 
     }
@@ -642,11 +550,8 @@
       // Hide submit button until maxTrials are completed
       $('#submitButton').hide();
 
-      // For some reason this needs to be redundantly reset
-      document.getElementById("timer-bar").style.width = `${100}%`;
-
       // Start the trial
-      setShapesTimer(isPractice);
+      initTrial(isPractice);
       run(isPractice);
 
     }
@@ -666,11 +571,8 @@
       // Hide submit button until maxTrials are completed
       $('#submitButton').hide();
 
-      // For some reason this needs to be redundantly reset
-      document.getElementById("timer-bar").style.width = `${100}%`;
-
       // Start the trial
-      setShapesTimer(isPractice);
+      initTrial(isPractice);
       run(isPractice);
 
     }
@@ -689,54 +591,15 @@
       document.getElementById("trial-counter").style.display = "none";
       document.getElementById("canvas").style.display = "none";
       document.getElementById("overlay").style.display = "none";
-      document.getElementById("timer").style.display = "none";
-      document.getElementById("timer-bar").style.display = "none";
-      document.getElementById("timer-bar-container").style.display = "none";
 
       // Show the confidence page and wait for key press
       document.getElementById("confidence").style.display = "block";
 
     }
 
-    // Function to handle the "Oh dear" message when the timer reaches 0
-    function outOfTimeMessage(isPractice) {
-        //console.log("current function: outOfTimeMessage");
-        // Hide elements and stop drawing
-        stopDrawing();
-        isPaused = true;
-        clearPreviousTimeout(); // Clear the previous timeout
-
-        // Set the flag to indicate that the timer is at 0
-        isTimerAtZero = true;
-
-        // display the Oh No message
-        document.getElementById("oh-no-page").style.display = "block";
-
-        // hide the timer bar and Confidence page
-        document.getElementById("timer-bar").style.display = "none";;
-        document.getElementById("confidence").style.display = "none";
-
-        // Hide submit button until maxTrials are completed
-        $('#submitButton').hide();
-
-        // save the trialwise variables
-        if (!isPractice) {
-          $('#nShapes' + trialNumber).val(shapeCounter);
-          $('#totalLLR' + trialNumber).val(totalLLR);
-          $('#choice' + trialNumber).val(-1);
-          $('#RT' + trialNumber).val(-1);
-          $('#conf' + trialNumber).val(-1);
-        }
-
-        // Remove the listener before adding it, to avoid duplicates
-        document.getElementById("continue-button").removeEventListener("click", eventListenerFunction);
-        document.getElementById("continue-button").addEventListener("click", eventListenerFunction);
-
-    }
-
     // Function to handle the timeout message when max shapes reached
     function maxShapesMessage(isPractice) {
-        //console.log("current function: maxShapesMessage");
+        console.log("current function: maxShapesMessage");
         // Hide elements and stop drawing
         stopDrawing();
         isPaused = true;
@@ -745,10 +608,8 @@
         // display the Max Shapes message
         document.getElementById("max-shapes-page").style.display = "block";
 
-        // hide the timer bar, Confidence page, and oh no page
-        document.getElementById("timer-bar").style.display = "none";;
+        // hide the Confidence page
         document.getElementById("confidence").style.display = "none";
-        document.getElementById("oh-no-page").style.display = "none";
 
         // Hide submit button until maxTrials are completed
         $('#submitButton').hide();
@@ -769,7 +630,6 @@
       $('#submitButton').hide();
 
       // Hide the various pages we don't want to see
-      document.getElementById("oh-no-page").style.display = "none";
       document.getElementById("max-shapes-page").style.display = "none";
       document.getElementById("all-done-page").style.display = "none";
       document.getElementById("confidence").style.display = "none";
@@ -779,7 +639,6 @@
       // Reset canvas and other elements
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       document.getElementById("overlay").style.display = "none";
-      document.getElementById("timer-bar").style.width = `${100}%`;
 
       // Reset variables
       shapeCounter = 0;
@@ -787,7 +646,6 @@
       passedTime = 0;
       isPaused = false;
       isOnConfPage = false;
-      isTimerAtZero = false;
 
       if (isPractice) {
         currentMaxTrials = practiceTrials;
@@ -799,8 +657,8 @@
         // increment trial counter
         trialNumber++;
 
-        // Restart the shapes/timer sequence for the next trial
-        setShapesTimer(isPractice);
+        // Initialize next trial
+        initTrial(isPractice);
 
         // Run it!
         run(isPractice);
@@ -810,7 +668,6 @@
             // once practiceTrials have been completed, hide the unwanted pages and show the end practice page
             console.log("Practice trials finished")
             document.getElementById("success-page").style.display = "none";
-            document.getElementById("oh-no-page").style.display = "none";
             document.getElementById("max-shapes-page").style.display = "none";
             document.getElementById("end-practice-page").style.display = "block";
 
@@ -822,7 +679,6 @@
             // once experiment trials have been completed, hide the unwanted pages and show the Congrats + submit page
             console.log("Max Trials reached!")
             document.getElementById("success-page").style.display = "none";
-            document.getElementById("oh-no-page").style.display = "none";
             document.getElementById("max-shapes-page").style.display = "none";
             document.getElementById("end-practice-page").style.display = "none";
             document.getElementById("all-done-page").style.display = "block";
@@ -855,7 +711,6 @@
 
     // Hide the various messages/pages we don't want to be visible yet
     document.getElementById("end-practice-page").style.display = "none";
-    document.getElementById("oh-no-page").style.display = "none";;
     document.getElementById("success-page").style.display = "none";
     document.getElementById("max-shapes-page").style.display = "none";
     document.getElementById("all-done-page").style.display = "none";
@@ -863,9 +718,6 @@
     document.getElementById("letter-red").style.display = "none";
     document.getElementById("correct-answer").style.display = "none";
     document.getElementById("trial-counter").style.display = "none";
-    document.getElementById("timer").style.display = "none";
-    document.getElementById("timer-bar").style.display = "none";
-    document.getElementById("timer-bar-container").style.display = "none";
     document.getElementById("canvas").style.display = "none";;
 
     // Show the welcome page
