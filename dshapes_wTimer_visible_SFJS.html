@@ -167,16 +167,10 @@
       <p><button id="resume-button">Resume</button></p>
   </div>
   <div id="all-done-page" class="page">
-      <br>Congratulations! All done for this set. Please click Submit to submit your results. Thanks!
+      <br>Congratulations! Please click Submit to submit your results. Thanks!
       <br>
         <!-- MTurk adds the submit button -->
   </div>
-
-<!-- This is the mechanism required by MTurk -->
-<crowd-form answer-format="flatten-objects">
-  <!-- javascript will dynamically generate the <div> blocks, to be stored in this container -->
-  <div id="trial-container"></div>
-</crowd-form>
 
 </body>
 </html>
@@ -250,6 +244,7 @@
         console.log("RT:",passedTime);
 
         const arrowPressed = event.code === "ArrowLeft" ? 0 : 1;
+        //console.log(`Arrow ${arrowPressed} key pressed`); // Log the event
 
         // Save variables
         if (!isPractice) {
@@ -278,6 +273,7 @@
       if (["Digit1", "Digit2", "Digit3", "Digit4", "Digit5","Numpad1", "Numpad2", "Numpad3", "Numpad4", "Numpad5"].includes(event.code) && (isOnConfPage == true)) {
 
         const numberPressed = event.code.slice(-1); // Extract the number from the event code
+        console.log(`Confidence rating = ${numberPressed}`); // Log the event
 
         if (!isPractice) {
           $('#conf' + trialNumber).val(numberPressed);
@@ -302,8 +298,6 @@
 // BEGIN HELPER FUNCTIONS
 
   // Function to add an event listener to a button, for continueToNextTrial
-
-  // Event listener function for "continue" buttons
   function eventListenerFunction() {
     continueToNextTrial(isPractice);
   }
@@ -840,19 +834,15 @@
 
     $('#submitButton').hide(); // Hide submit button until maxTrials are completed
 
-    // Generate the nTrials <div> blocks for crowd-input
-    const inputNames = ['startTime', 'corChoice', 'totalLLR', 'nShapes', 'deadline', 'choice', 'RT', 'conf']; // Add more variable names as needed
-    for (let trNum = 1; trNum <= maxTrials; trNum++) {
-      const trialDiv = document.createElement('div');
-      trialDiv.className = 'trialDiv';
 
-      const inputElements = createHiddenInputs(trNum, inputNames);
-      inputElements.forEach((input) => {
-        trialDiv.appendChild(input);
-      });
 
-      document.getElementById('trial-container').appendChild(trialDiv);
-    }
+
+    // new function goes here
+
+
+
+
+
 
     // Hide the various messages/pages we don't want to be visible yet
     document.getElementById("end-practice-page").style.display = "none";
