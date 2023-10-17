@@ -182,37 +182,93 @@ TEquant = quantile(totalEvidence,28); % e.g. 28 bins; can try others
 
 % no deadline
 theseTrials = deadline==0 & totalEvidence<TEquant(1);
-chFreq_noD(1) = mean(choice(theseTrials));
-meanRT_noD(1) = mean(RT(theseTrials));
-meanConf_noD(1) = mean(conf(theseTrials));
+
+choice_noD{1} = choice(theseTrials);
+  chFreq_noD(1) = mean(choice(theseTrials));
+RT_noD{1} = RT(theseTrials);
+  meanRT_noD(1) = mean(RT(theseTrials));
+conf_noD{1} = conf(theseTrials);
+  meanConf_noD(1) = mean(conf(theseTrials));
 for j = 1:length(TEquant)-1
     theseTrials = deadline==0 & totalEvidence>=TEquant(j) & totalEvidence<TEquant(j+1);
-    chFreq_noD(j+1) = mean(choice(theseTrials));
-    meanRT_noD(j+1) = mean(RT(theseTrials));
-    meanConf_noD(j+1) = mean(conf(theseTrials));
+    choice_noD{j+1} = choice(theseTrials);
+      chFreq_noD(j+1) = mean(choice(theseTrials));
+    RT_noD{j+1} = RT(theseTrials);
+      meanRT_noD(j+1) = mean(RT(theseTrials));
+    conf_noD{j+1} = conf(theseTrials);
+      meanConf_noD(j+1) = mean(conf(theseTrials));
 end
 theseTrials = deadline==0 & totalEvidence>=TEquant(end);
-chFreq_noD(end+1) = mean(choice(theseTrials));
-meanRT_noD(end+1) = mean(RT(theseTrials));
-meanConf_noD(end+1) = mean(conf(theseTrials));
+choice_noD{end+1} = choice(theseTrials);
+  chFreq_noD(end+1) = mean(choice(theseTrials));
+RT_noD{end+1} = RT(theseTrials);
+  meanRT_noD(end+1) = mean(RT(theseTrials));
+conf_noD{end+1} = conf(theseTrials);
+  meanConf_noD(end+1) = mean(conf(theseTrials));
 
 
 % with deadline
 theseTrials = deadline==1 & totalEvidence<TEquant(1);
-chFreq_wD(1) = mean(choice(theseTrials));
-meanRT_wD(1) = mean(RT(theseTrials));
-meanConf_wD(1) = mean(conf(theseTrials));
+
+choice_wD{1} = choice(theseTrials);
+  chFreq_wD(1) = mean(choice(theseTrials));
+RT_wD{1} = RT(theseTrials);
+  meanRT_wD(1) = mean(RT(theseTrials));
+conf_wD{1} = conf(theseTrials);
+  meanConf_wD(1) = mean(conf(theseTrials));
 for j = 1:length(TEquant)-1
     theseTrials = deadline==1 & totalEvidence>=TEquant(j) & totalEvidence<TEquant(j+1);
-    chFreq_wD(j+1) = mean(choice(theseTrials));
-    meanRT_wD(j+1) = mean(RT(theseTrials));
-    meanConf_wD(j+1) = mean(conf(theseTrials));
+    choice_wD{j+1} = choice(theseTrials);
+      chFreq_wD(j+1) = mean(choice(theseTrials));
+    RT_wD{j+1} = RT(theseTrials);
+      meanRT_wD(j+1) = mean(RT(theseTrials));
+    conf_wD{j+1} = conf(theseTrials);
+      meanConf_wD(j+1) = mean(conf(theseTrials));
 end
 theseTrials = deadline==1 & totalEvidence>=TEquant(end);
-chFreq_wD(end+1) = mean(choice(theseTrials));
-meanRT_wD(end+1) = mean(RT(theseTrials));
-meanConf_wD(end+1) = mean(conf(theseTrials));
+choice_wD{end+1} = choice(theseTrials);
+  chFreq_wD(end+1) = mean(choice(theseTrials));
+RT_wD{end+1} = RT(theseTrials);
+  meanRT_wD(end+1) = mean(RT(theseTrials));
+conf_wD{end+1} = conf(theseTrials);
+  meanConf_wD(end+1) = mean(conf(theseTrials));
 
+
+%% ttest on overall Conf and RT (irrespective of quantile), split by wD/noD
+
+% Can skip the first part and just use logical indexing within the ttest
+% line:
+
+% Perform a t-test to compare RT between the two groups
+[h, p, ci, stats] = ttest2(RT(deadline==0), RT(deadline==1));
+
+% Display the t-test results
+fprintf('T-Test Results for RT:\n');
+fprintf('Hypothesis test result (h): %d\n', h);
+fprintf('P-Value (p): %f\n', p);
+fprintf('Confidence interval for the difference in means: [%f, %f]\n', ci(1), ci(2));
+fprintf('T-statistic: %f\n', stats.tstat);
+fprintf('Degrees of freedom: %f\n', stats.df);
+
+
+% Perform a t-test to compare Conf between the two groups
+[h, p, ci, stats] = ttest2(conf(deadline==0), conf(deadline==1));
+
+% Display the t-test results
+fprintf('T-Test Results for Conf:\n');
+fprintf('Hypothesis test result (h): %d\n', h);
+fprintf('P-Value (p): %f\n', p);
+fprintf('Confidence interval for the difference in means: [%f, %f]\n', ci(1), ci(2));
+fprintf('T-statistic: %f\n', stats.tstat);
+fprintf('Degrees of freedom: %f\n', stats.df);
+
+
+%% ttest on wD vs noD, separately for each evidence quantile
+
+for k = 1:length(chFreq_noD)
+    [~, RT_p(k,1), ~, ~] = ttest2(RT_noD{k}, RT_wD{k});
+    [~, conf_p(k,1), ~, ~] = ttest2(conf_noD{k}, conf_wD{k});
+end
 
 
 %%
@@ -260,9 +316,3 @@ changeAxesFontSize(gca,15,15);
 
 
 
-% % % % temp, testing sample.m:
-% % % for n=1:10000
-% % %     samp(n) = sample(samplingDist_blue);
-% % % end
-% % % figure;
-% % % histogram(samp,'Normalization','probability');

@@ -167,16 +167,15 @@
       <p><button id="resume-button">Resume</button></p>
   </div>
   <div id="all-done-page" class="page">
-      <br>Congratulations! All done for this set. Please click Submit to submit your results. Thanks!
+      <br>Congratulations! All done for this block.
+      <br>Please click Copy Results to Clipboard, then click Open Google Sheet.
+      <br>From there, paste your data (Command-V or Ctrl-V) into the first empty column. Thanks!
       <br>
-        <!-- MTurk adds the submit button -->
+      <br>
   </div>
+  <div id="results"></div>
+  <p><button id="copyButton">Copy to Clipboard</button></p>
 
-<!-- This is the mechanism required by MTurk -->
-<crowd-form answer-format="flatten-objects">
-  <!-- javascript will dynamically generate the <div> blocks, to be stored in this container -->
-  <div id="trial-container"></div>
-</crowd-form>
 
 </body>
 </html>
@@ -192,6 +191,9 @@
     const canvas = document.getElementById("canvas");
     const ctx = canvas.getContext("2d"); // Define the ctx variable
 
+    // Initialize an empty array to store the data
+    let allData = [];
+
     // Declare timer-related variables
     let passedTime = 0; // Initialize passedTime
     let trialNumber = 1 // Initialize trialNumber
@@ -203,8 +205,8 @@
     let previousTimeoutId; // Variable to store the ID of the previous timeout
 
     // Set the number of trials
-    const practiceTrials = 7;
-    const maxTrials = 30;
+    const practiceTrials = 1;
+    const maxTrials = 2;
     let currentMaxTrials; // dummy var for whether counting practice or regular trials
 
     // Define the shapes and their corresponding log likelihood ratios
@@ -253,17 +255,14 @@
 
         // Save variables
         if (!isPractice) {
-          $('#nShapes' + trialNumber).val(shapeCounter);
-          $('#totalLLR' + trialNumber).val(totalLLR);
-          $('#choice' + trialNumber).val(arrowPressed);
-          $('#RT' + trialNumber).val(passedTime);
+          appendToData('nShapes' + trialNumber, shapeCounter);
+          appendToData('totalLLR' + trialNumber, totalLLR);
+          appendToData('choice' + trialNumber, arrowPressed);
+          appendToData('RT' + trialNumber, passedTime);
         }
 
         // Hide the timer bar container
         document.getElementById("timer-bar-container").classList.add("hidden");
-
-        // Hide submit button until maxTrials are completed
-        $('#submitButton').hide();
 
         stopDrawing();
 
@@ -280,13 +279,11 @@
         const numberPressed = event.code.slice(-1); // Extract the number from the event code
 
         if (!isPractice) {
-          $('#conf' + trialNumber).val(numberPressed);
+          appendToData('conf' + trialNumber, numberPressed);
         }
 
         // Hide the confidence page
         document.getElementById("confidence").style.display = "none";
-
-        $('#submitButton').hide(); // Hide submit button until maxTrials are completed
 
         // Display the success page with "Good job" message and next trial button
         document.getElementById("success-page").style.display = "block";
@@ -301,9 +298,17 @@
 
 // BEGIN HELPER FUNCTIONS
 
-  // Function to add an event listener to a button, for continueToNextTrial
+  // Function to append a single variable and its value
+  function appendToData(variableName, variableValue) {
+    allData.push({ name: variableName, value: variableValue });
+  }
 
-  // Event listener function for "continue" buttons
+  // Function to convert allData to a comma-separated string
+  function dataToCSV() {
+    const csvString = allData.map((item) => `${item.name},${item.value}`).join('\n');
+    return csvString;
+  }
+    // Function to add an event listener to a button, for continueToNextTrial
   function eventListenerFunction() {
     continueToNextTrial(isPractice);
   }
@@ -313,20 +318,6 @@
     if (previousTimeoutId) {
       clearTimeout(previousTimeoutId);
     }
-  }
-
-  // function for formatting multiple hidden input variables
-  function createHiddenInputs(trNum, inputNames) {
-    const inputElements = [];
-    inputNames.forEach((name) => {
-      const crowdInput = document.createElement('crowd-input');
-      crowdInput.type = 'hidden';
-      crowdInput.name = `${name}${trNum}`;
-      crowdInput.value = '-1';
-      crowdInput.id = `${name}${trNum}`;
-      inputElements.push(crowdInput);
-    });
-    return inputElements;
   }
 
   // Function to stop drawing shapes
@@ -392,7 +383,7 @@
       // Set the start time
       startTime = Date.now();
       if (!isPractice) {
-        $('#startTime' + trialNumber).val(startTime);
+        appendToData('startTime' + trialNumber, startTime);
       }
 
       // Start the shape sequence
@@ -523,8 +514,8 @@
 
         // save some variables before aborting the trial
         if (!isPractice) {
-          $('#nShapes' + trialNumber).val(shapeCounter);
-          $('#totalLLR' + trialNumber).val(totalLLR);
+          appendToData('nShapes' + trialNumber, shapeCounter);
+          appendToData('totalLLR' + trialNumber, totalLLR);
         }
 
         // Display new message (not out of time, just weren't paying attention?)
@@ -618,8 +609,8 @@
 
       // Save some trial data variables
       if (!isPractice) {
-        $('#corChoice' + trialNumber).val(correctChoice);
-        $('#deadline' + trialNumber).val(countdownMilliseconds);
+        appendToData('corChoice' + trialNumber, correctChoice);
+        appendToData('deadline' + trialNumber, countdownMilliseconds);
       }
 
     }
@@ -636,9 +627,6 @@
       // Hide the intro page (and end-practice too in case of multiple practice rounds)
       document.getElementById("intro-page").style.display = "none";
       document.getElementById("end-practice-page").style.display = "none";
-
-      // Hide submit button until maxTrials are completed
-      $('#submitButton').hide();
 
       // For some reason this needs to be redundantly reset
       document.getElementById("timer-bar").style.width = "100%";
@@ -660,9 +648,6 @@
 
       // Hide the end-practice page
       document.getElementById("end-practice-page").style.display = "none";
-
-      // Hide submit button until maxTrials are completed
-      $('#submitButton').hide();
 
       // For some reason this needs to be redundantly reset
       document.getElementById("timer-bar").style.width = "100%";
@@ -714,16 +699,13 @@
         document.getElementById("timer-bar").style.display = "none";;
         document.getElementById("confidence").style.display = "none";
 
-        // Hide submit button until maxTrials are completed
-        $('#submitButton').hide();
-
         // save the trialwise variables
         if (!isPractice) {
-          $('#nShapes' + trialNumber).val(shapeCounter);
-          $('#totalLLR' + trialNumber).val(totalLLR);
-          $('#choice' + trialNumber).val(-1);
-          $('#RT' + trialNumber).val(-1);
-          $('#conf' + trialNumber).val(-1);
+          appendToData('nShapes' + trialNumber, shapeCounter);
+          appendToData('totalLLR' + trialNumber, totalLLR);
+          appendToData('choice' + trialNumber, -1);
+          appendToData('RT' + trialNumber, -1);
+          appendToData('conf' + trialNumber, -1);
         }
 
         // Remove the listener before adding it, to avoid duplicates
@@ -748,9 +730,6 @@
         document.getElementById("confidence").style.display = "none";
         document.getElementById("oh-no-page").style.display = "none";
 
-        // Hide submit button until maxTrials are completed
-        $('#submitButton').hide();
-
         // Remove the listener before adding it, to avoid duplicates
         document.getElementById("resume-button").removeEventListener("click", eventListenerFunction);
         document.getElementById("resume-button").addEventListener("click", eventListenerFunction);
@@ -763,13 +742,12 @@
 
       clearPreviousTimeout(); // Clear the previous timeout
 
-      // Hide submit button until maxTrials are completed
-      $('#submitButton').hide();
-
       // Hide the various pages we don't want to see
       document.getElementById("oh-no-page").style.display = "none";
       document.getElementById("max-shapes-page").style.display = "none";
       document.getElementById("all-done-page").style.display = "none";
+      document.getElementById("results").style.display = "none";
+      document.getElementById("copyButton").style.display = "none";
       document.getElementById("confidence").style.display = "none";
       document.getElementById("success-page").style.display = "none";
       document.getElementById("end-practice-page").style.display = "none";
@@ -820,7 +798,7 @@
             document.getElementById("start-practice-button2").addEventListener("click", startPracticeBlock);
 
           } else {
-            // once experiment trials have been completed, hide the unwanted pages and show the Congrats + submit page
+            // once experiment trials have been completed, hide the unwanted pages and show the 'all done' page
             console.log("Max Trials reached!")
             document.getElementById("success-page").style.display = "none";
             document.getElementById("oh-no-page").style.display = "none";
@@ -828,7 +806,42 @@
             document.getElementById("end-practice-page").style.display = "none";
             document.getElementById("all-done-page").style.display = "block";
 
-            $('#submitButton').show(); //MTurk will create the object submitButton
+            // Show the results div and copy button
+            const resultsDiv = document.getElementById('results');
+            const copyButton = document.getElementById('copyButton');
+
+            resultsDiv.style.display = "block";
+            copyButton.style.display = "block";
+
+            // Convert the data to CSV
+            const csvData = dataToCSV();
+
+            resultsDiv.textContent = csvData;
+
+            // Add a click event listener to the button
+            copyButton.addEventListener('click', function() {
+              // Create a textarea element to temporarily hold the text
+              const textarea = document.createElement('textarea');
+              textarea.value = resultsDiv.textContent;
+
+              // Append the textarea to the document
+              document.body.appendChild(textarea);
+
+              // Select the text in the textarea
+              textarea.select();
+
+              // Copy the selected text to the clipboard
+              document.execCommand('copy');
+
+              // Remove the textarea from the document
+              document.body.removeChild(textarea);
+
+              // Provide a user feedback (you can customize this)
+              alert('Results copied to clipboard!');
+            });
+
+            // Provide a link to a Google Sheet
+            resultsDiv.innerHTML += '<p><a href="https://docs.google.com/spreadsheets/d/1me4VKYvj6a_MGPb-1pT8Jm3gIUxX04RaeZhGgQcmAtw/edit?usp=sharing" target="_blank" >Open Google Sheet</a></p>';
 
           }
 
@@ -838,28 +851,14 @@
 
 // BEGIN EXECUTION CODE
 
-    $('#submitButton').hide(); // Hide submit button until maxTrials are completed
-
-    // Generate the nTrials <div> blocks for crowd-input
-    const inputNames = ['startTime', 'corChoice', 'totalLLR', 'nShapes', 'deadline', 'choice', 'RT', 'conf']; // Add more variable names as needed
-    for (let trNum = 1; trNum <= maxTrials; trNum++) {
-      const trialDiv = document.createElement('div');
-      trialDiv.className = 'trialDiv';
-
-      const inputElements = createHiddenInputs(trNum, inputNames);
-      inputElements.forEach((input) => {
-        trialDiv.appendChild(input);
-      });
-
-      document.getElementById('trial-container').appendChild(trialDiv);
-    }
-
     // Hide the various messages/pages we don't want to be visible yet
     document.getElementById("end-practice-page").style.display = "none";
     document.getElementById("oh-no-page").style.display = "none";;
     document.getElementById("success-page").style.display = "none";
     document.getElementById("max-shapes-page").style.display = "none";
     document.getElementById("all-done-page").style.display = "none";
+    document.getElementById("results").style.display = "none";
+    document.getElementById("copyButton").style.display = "none";
     document.getElementById("letter-blue").style.display = "none";
     document.getElementById("letter-red").style.display = "none";
     document.getElementById("correct-answer").style.display = "none";
