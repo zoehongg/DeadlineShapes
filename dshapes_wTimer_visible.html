@@ -117,7 +117,7 @@
       <p>By "confidence" we mean the likelihood of being correct, e.g. if you are pretty sure you got it <b><i>wrong</i></b>, you'd press 1.</p>
 
       <p>After you submit your confidence rating, a new trial will begin, with a new random sequence and random correct answer.</p>
-      <p>You must attempt 30 trials (not including practice trials) for the data to be valid. When done, the Submit button will appear.</p>
+      <p>You must attempt 50 trials (not including practice trials) for the data to be valid. When done, the Submit button will appear.</p>
 
       <p>Let's try a few practice trials first. Ready?</p>
 
@@ -205,8 +205,8 @@
     let previousTimeoutId; // Variable to store the ID of the previous timeout
 
     // Set the number of trials
-    const practiceTrials = 1;
-    const maxTrials = 2;
+    const practiceTrials = 10;
+    const maxTrials = 50;
     let currentMaxTrials; // dummy var for whether counting practice or regular trials
 
     // Define the shapes and their corresponding log likelihood ratios
