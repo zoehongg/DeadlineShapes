@@ -325,18 +325,12 @@ changeAxesFontSize(gca,15,15);
 % now use logistic regression to test whether the slope of the choice
 % function is singificantly different on deadline vs. no-deadline trials.
 % To do this, we need to somehow include deadline in the design matrix (X).
-% But we can't only add it by itself, i.e.: X = [totalEvidence deadline];
-% This would only test whether deadline caused a change in the offset (aka
-% bias), not the slope (aka sensitivity). For the latter we need to also
-% include the product deadline*totalEvidence, which is sometimes called 
-% making deadline an 'indicator' variable. For completeness, we'll do both:
+% But we can't just add it by itself, i.e.: X = [totalEvidence deadline]; not by itself but multipled by totalEvidence. Adding it by and see
+% whether its coefficient is significantly different from zero
 
-X = [totalEvidence deadline deadline.*totalEvidence];
+
 y = choice;
 [beta, ~, stats] = glmfit(X, y, 'binomial');
-
-deadlineBiasEffect_pval = stats.p(3)
-deadlineSlopeEffect_pval = stats.p(4)
 
 
 
